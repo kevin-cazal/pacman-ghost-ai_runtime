@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+lib/monaco
+lib/fengari
+tests
+test-results
+playwright-report
+NOTES_ANIMATEUR.md
+Solutions.md

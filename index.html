@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mini Pac-Man — Runtime</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="focus-editor">
+  <div class="split-root">
+    <div class="column-left">
+      <div class="pane pane-game" id="game-pane" tabindex="0">
+        <p class="pane-label">Jeu</p>
+        <p class="pane-hint pane-hint-game"></p>
+        <div class="game-controls">
+          <button type="button" id="btn-start" class="game-btn game-btn-start">Démarrer</button>
+          <button type="button" id="btn-reset" class="game-btn game-btn-reset">Réinitialiser</button>
+        </div>
+        <div class="game-canvas-wrap">
+          <canvas id="game" tabindex="0"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="pane pane-code" id="panel-code">
+      <p class="pane-label">Code</p>
+      <p class="pane-hint"></p>
+      <div class="editor-host" id="editor-host"></div>
+      <p class="editor-error" id="editor-error" hidden></p>
+    </div>
+  </div>
+
+  <script src="lib/fengari/fengari-web.js"></script>
+  <script src="lib/monaco/vs/loader.js"></script>
+  <script type="module" src="js/main.js?v=5"></script>
+</body>
+</html>

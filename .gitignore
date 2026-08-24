@@ -1,0 +1,8 @@
+node_modules/
+lib/monaco/
+lib/fengari/
+test-results/
+playwright-report/
+
+NOTES_ANIMATEUR.md
+Solutions.md
