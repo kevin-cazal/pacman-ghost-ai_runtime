@@ -17,8 +17,12 @@ export function normalizeInfos(infos) {
     return infos;
   }
 
+  // Une table Lua ne peut pas contenir nil : y ranger nil, c'est effacer la clé.
+  // Côté JS la clé existe avec la valeur null. « Absente » et « nulle » décrivent
+  // donc le même fait, et la comparaison doit les traiter pareil.
   return Object.fromEntries(
     Object.entries(infos)
+      .filter(([, value]) => value !== null && value !== undefined)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([key, value]) => [key, normalizeValue(value)])
   );
