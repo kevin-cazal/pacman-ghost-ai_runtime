@@ -34,8 +34,8 @@ export function luaProxyToObject(proxy) {
 
 function toLuaGhost(ghostCtx) {
   return {
-    gridX: ghostCtx.gridX,
-    gridY: ghostCtx.gridY,
+    X: ghostCtx.gridX,
+    Y: ghostCtx.gridY,
     direction: ghostCtx.direction,
     state: ghostCtx.state,
     patrolLockTimer: ghostCtx.patrolLockTimer,
@@ -44,8 +44,8 @@ function toLuaGhost(ghostCtx) {
 
 function toLuaPacman(pacmanCtx) {
   return {
-    gridX: pacmanCtx.gridX,
-    gridY: pacmanCtx.gridY,
+    X: pacmanCtx.gridX,
+    Y: pacmanCtx.gridY,
   };
 }
 
