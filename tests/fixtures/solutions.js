@@ -46,7 +46,7 @@ export function updateState(infos, game) {
 `,
     lua: `function buildInfos(ghost, pacman, map)
   return {
-    canGoLeft = not map.isWall(ghost.gridX - 1, ghost.gridY),
+    canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
   }
 end
 
@@ -112,12 +112,12 @@ end
 
 function buildInfos(ghost, pacman, map)
   return {
-    canGoUp = not map.isWall(ghost.gridX, ghost.gridY - 1),
-    canGoDown = not map.isWall(ghost.gridX, ghost.gridY + 1),
-    canGoLeft = not map.isWall(ghost.gridX - 1, ghost.gridY),
-    canGoRight = not map.isWall(ghost.gridX + 1, ghost.gridY),
-    distanceX = pacman.gridX - ghost.gridX,
-    distanceY = pacman.gridY - ghost.gridY,
+    canGoUp = not map.isWall(ghost.X, ghost.Y - 1),
+    canGoDown = not map.isWall(ghost.X, ghost.Y + 1),
+    canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
+    canGoRight = not map.isWall(ghost.X + 1, ghost.Y),
+    distanceX = pacman.X - ghost.X,
+    distanceY = pacman.Y - ghost.Y,
   }
 end
 
@@ -154,7 +154,7 @@ export function updateState(infos, game) {
 `,
     lua: `function buildInfos(ghost, pacman, map)
   return {
-    totalDistance = math.abs(pacman.gridX - ghost.gridX) + math.abs(pacman.gridY - ghost.gridY),
+    totalDistance = math.abs(pacman.X - ghost.X) + math.abs(pacman.Y - ghost.Y),
     state = ghost.state,
   }
 end
@@ -200,8 +200,8 @@ export function updateState(infos, game) {
 `,
     lua: `function buildInfos(ghost, pacman, map)
   return {
-    canGoLeft = not map.isWall(ghost.gridX - 1, ghost.gridY),
-    canGoRight = not map.isWall(ghost.gridX + 1, ghost.gridY),
+    canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
+    canGoRight = not map.isWall(ghost.X + 1, ghost.Y),
     currentDirection = ghost.direction,
     patrolLockTimer = ghost.patrolLockTimer,
     state = ghost.state,
