@@ -2,7 +2,7 @@
 
 import { Game } from './game.js';
 import { initEditor } from './editor.js';
-import { loadInitialCode, applyStudentCode, formatRuntimeError } from './workshop_loader.js';
+import { loadInitialCode, applyStudentCode, formatRuntimeError, evalInStudentState } from './workshop_loader.js';
 import { getWorkshopMode } from './workshop/config.js';
 import { watchCanvasResize } from './canvas_resize.js';
 import { initEntityPlacement } from './entity_placement.js';
@@ -108,7 +108,7 @@ btnReset.addEventListener('click', (e) => {
 async function boot() {
   setFocus('editor');
   syncGameControls();
-  initConsolePane(editorConsoleEl);
+  initConsolePane(editorConsoleEl, evalInStudentState);
   watchCanvasResize(canvas);
   initEntityPlacement(canvas, game);
 
