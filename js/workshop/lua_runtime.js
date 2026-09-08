@@ -93,6 +93,13 @@ function createLuaState() {
   const { luaL_newstate, luaL_requiref, luaL_loadstring, luaL_dostring } = lauxlib;
   const { luaL_openlibs } = lualib;
   const {
+    lua_createtable,
+    lua_setfield,
+    lua_pushinteger,
+    lua_pushnumber,
+    lua_pushboolean,
+    lua_pushstring,
+    lua_pushnil,
     lua_getglobal,
     lua_setglobal,
     lua_pcall,
@@ -147,6 +154,52 @@ function createLuaState() {
     lua_settop(L, 0);
   }
 
+  // Les positions arrivent du moteur en `Number`. Poussées via l'interop, elles
+  // deviennent des flottants Lua : `ghost.X` vaut alors 9.0, et un élève qui
+  // écrit `print('x=' .. ghost.X)` lit « x=9.0 ». On construit donc une vraie
+  // table Lua et on pousse chaque entier avec lua_pushinteger. Les valeurs
+  // réellement fractionnaires (scaredTimer, patrolLockTimer) restent flottantes.
+  function pushValue(v) {
+    if (v === null || v === undefined) {
+      lua_pushnil(L);
+    } else if (typeof v === 'boolean') {
+      lua_pushboolean(L, v);
+    } else if (typeof v === 'number') {
+      if (Number.isInteger(v)) lua_pushinteger(L, v);
+      else lua_pushnumber(L, v);
+    } else if (typeof v === 'string') {
+      lua_pushstring(L, to_luastring(v));
+    } else if (isPlainData(v)) {
+      pushPlainTable(v);
+    } else {
+      push(L, v);
+    }
+  }
+
+  function pushPlainTable(obj) {
+    const entries = Object.entries(obj);
+    lua_createtable(L, 0, entries.length);
+    for (const [key, value] of entries) {
+      pushValue(value);
+      lua_setfield(L, -2, to_luastring(key));
+    }
+  }
+
+  // Une table qui contient une fonction (map.isWall) doit passer par l'interop :
+  // seul lui sait fabriquer le proxy appelable depuis Lua.
+  function isPlainData(v) {
+    if (v === null || typeof v !== 'object') return false;
+    if (Array.isArray(v)) return false;
+    return Object.values(v).every(
+      (x) => typeof x !== 'function' && (typeof x !== 'object' || x === null || isPlainData(x))
+    );
+  }
+
+  function pushArg(arg) {
+    if (isPlainData(arg)) pushPlainTable(arg);
+    else push(L, arg);
+  }
+
   function callGlobal(name, args, { convertResult = true } = {}) {
     lua_getglobal(L, to_luastring(name));
     if (lua_type(L, -1) !== LUA_TFUNCTION) {
@@ -154,7 +207,7 @@ function createLuaState() {
       throw new Error(`Fonction ${name} introuvable`);
     }
 
-    args.forEach((arg) => push(L, arg));
+    args.forEach((arg) => pushArg(arg));
 
     const status = lua_pcall(L, args.length, 1, 0);
     if (status !== LUA_OK) {
