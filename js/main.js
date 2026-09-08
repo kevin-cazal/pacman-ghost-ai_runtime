@@ -7,6 +7,7 @@ import { getWorkshopMode } from './workshop/config.js';
 import { renderMarkdown } from './workshop/markdown.js';
 import { watchCanvasResize } from './canvas_resize.js';
 import { initEntityPlacement } from './entity_placement.js';
+import { initConsolePane, clearConsole } from './workshop/console_pane.js';
 
 const workshopMode = getWorkshopMode();
 
@@ -35,6 +36,7 @@ const instructionsEl = document.getElementById('instructions');
 const btnStart = document.getElementById('btn-start');
 const btnReset = document.getElementById('btn-reset');
 const editorErrorEl = document.getElementById('editor-error');
+const editorConsoleEl = document.getElementById('editor-console');
 
 let editor = null;
 
@@ -86,6 +88,7 @@ function showError(message) {
 async function applyCurrentCode() {
   if (!editor) return 'Éditeur non disponible';
 
+  clearConsole();
   const error = await applyStudentCode(editor.getValue(), game, workshopMode);
   showError(error);
   return error;
@@ -155,6 +158,7 @@ async function boot() {
   renderInstructions();
   setFocus('editor');
   syncGameControls();
+  initConsolePane(editorConsoleEl);
   watchCanvasResize(canvas);
   initEntityPlacement(canvas, game);
 
