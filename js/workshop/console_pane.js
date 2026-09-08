@@ -1,0 +1,111 @@
+// NE PAS MODIFIER — panneau Console de l'atelier
+//
+// Sortie de `print(...)` pour le code Lua des élèves. Le but est qu'un élève
+// n'ait jamais à ouvrir la console du navigateur.
+//
+// Deux contraintes viennent du jeu : `buildInfos` et `chooseDirection` sont
+// appelées à la fréquence d'affichage, donc un `print` dedans produit ~60
+// lignes par seconde. On plie donc les lignes identiques consécutives en
+// « × N », on borne l'historique, et on écrit dans le DOM de façon
+// incrémentale (une ligne ajoutée = un noeud ajouté), sous requestAnimationFrame.
+
+const MAX_LINES = 200;
+const PLACEHOLDER = 'Rien pour l’instant — utilise print(...) dans ton code.';
+
+let outEl = null;
+let emptyEl = null;
+let lines = [];
+let pending = false;
+let frame = 0;
+
+function decode(value) {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value;
+  if (value instanceof Uint8Array) return new TextDecoder().decode(value);
+  return String(value);
+}
+
+function atBottom() {
+  return outEl.scrollHeight - outEl.scrollTop - outEl.clientHeight < 24;
+}
+
+function makeLine(text) {
+  const el = document.createElement('div');
+  el.className = 'console-line';
+  el.append(document.createTextNode(text));
+  return el;
+}
+
+function flush() {
+  frame = 0;
+  if (!pending || !outEl) return;
+  pending = false;
+
+  const stick = atBottom();
+  emptyEl.hidden = lines.length > 0;
+
+  for (const line of lines) {
+    if (!line.el) {
+      line.el = makeLine(line.text);
+      outEl.append(line.el);
+    }
+    if (line.count !== line.shownCount) {
+      line.shownCount = line.count;
+      if (line.count > 1) {
+        if (!line.badge) {
+          line.badge = document.createElement('span');
+          line.badge.className = 'console-count';
+          line.el.append(line.badge);
+        }
+        line.badge.textContent = ` × ${line.count}`;
+      }
+    }
+  }
+
+  if (stick) outEl.scrollTop = outEl.scrollHeight;
+}
+
+function schedule() {
+  pending = true;
+  if (!frame && outEl) frame = requestAnimationFrame(flush);
+}
+
+export function consoleWrite(value) {
+  const text = decode(value);
+  const last = lines[lines.length - 1];
+
+  if (last && last.text === text) {
+    last.count += 1;
+  } else {
+    lines.push({ text, count: 1, shownCount: 0, el: null, badge: null });
+    while (lines.length > MAX_LINES) {
+      const dropped = lines.shift();
+      if (dropped.el) dropped.el.remove();
+    }
+  }
+  schedule();
+}
+
+export function clearConsole() {
+  for (const line of lines) {
+    if (line.el) line.el.remove();
+  }
+  lines = [];
+  schedule();
+}
+
+export function initConsolePane(root) {
+  outEl = root.querySelector('.console-out');
+  emptyEl = root.querySelector('.console-empty');
+  emptyEl.textContent = PLACEHOLDER;
+
+  const btn = root.querySelector('.console-clear');
+  if (btn) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      clearConsole();
+    });
+  }
+
+  schedule();
+}

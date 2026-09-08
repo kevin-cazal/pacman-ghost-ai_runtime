@@ -1,5 +1,7 @@
 // NE PAS MODIFIER — pont Fengari pour le code Lua des élèves
 
+import { consoleWrite } from './console_pane.js';
+
 function getFengari() {
   const fengari = globalThis.fengari;
   if (!fengari) {
@@ -92,6 +94,7 @@ function createLuaState() {
   const { luaL_openlibs } = lualib;
   const {
     lua_getglobal,
+    lua_setglobal,
     lua_pcall,
     lua_settop,
     lua_type,
@@ -105,6 +108,44 @@ function createLuaState() {
   luaL_openlibs(L);
   luaL_requiref(L, to_luastring('js'), luaopen_js, 0);
   lua_pop(L, 1);
+
+  installPrint();
+
+  // Remplace le `print` de Lua pour qu'il écrive dans le panneau Console au
+  // lieu de la console du navigateur. La mise en forme (varargs, tostring,
+  // tabulations) est faite côté Lua : le pont JS ne reçoit qu'une chaîne.
+  function installPrint() {
+    push(L, function (text) {
+      // Fengari passe parfois le premier argument via `this` (voir
+      // fengari-interop#32) : on accepte les deux conventions.
+      consoleWrite(text === undefined ? this : text);
+    });
+    lua_setglobal(L, to_luastring('__workshop_print'));
+
+    const status = luaL_dostring(L, to_luastring(`
+      local emit = __workshop_print
+      __workshop_print = nil
+      -- Les positions arrivent du moteur JS en flottants : 3 s'afficherait
+      -- « 3.0 ». On retire le .0 quand la valeur est entière, et seulement là.
+      local function show(v)
+        if type(v) == 'number' and v > -1e15 and v < 1e15 and v == math.floor(v) then
+          return string.format('%d', v)
+        end
+        return tostring(v)
+      end
+      print = function(...)
+        local n = select('#', ...)
+        local parts = {}
+        for i = 1, n do parts[i] = show((select(i, ...))) end
+        emit(table.concat(parts, '\t'))
+      end
+    `));
+    if (status !== LUA_OK) {
+      lua_settop(L, 0);
+      throw new Error('Impossible d’installer print');
+    }
+    lua_settop(L, 0);
+  }
 
   function callGlobal(name, args, { convertResult = true } = {}) {
     lua_getglobal(L, to_luastring(name));

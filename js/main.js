@@ -6,6 +6,7 @@ import { loadInitialCode, applyStudentCode, formatRuntimeError } from './worksho
 import { getWorkshopMode } from './workshop/config.js';
 import { watchCanvasResize } from './canvas_resize.js';
 import { initEntityPlacement } from './entity_placement.js';
+import { initConsolePane, clearConsole } from './workshop/console_pane.js';
 
 const workshopMode = getWorkshopMode();
 
@@ -26,6 +27,7 @@ const gamePane = document.getElementById('game-pane');
 const btnStart = document.getElementById('btn-start');
 const btnReset = document.getElementById('btn-reset');
 const editorErrorEl = document.getElementById('editor-error');
+const editorConsoleEl = document.getElementById('editor-console');
 
 let editor = null;
 
@@ -61,6 +63,7 @@ function showError(message) {
 async function applyCurrentCode() {
   if (!editor) return 'Éditeur non disponible';
 
+  clearConsole();
   const error = await applyStudentCode(editor.getValue(), game, workshopMode);
   showError(error);
   return error;
@@ -105,6 +108,7 @@ btnReset.addEventListener('click', (e) => {
 async function boot() {
   setFocus('editor');
   syncGameControls();
+  initConsolePane(editorConsoleEl);
   watchCanvasResize(canvas);
   initEntityPlacement(canvas, game);
 
