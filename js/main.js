@@ -2,7 +2,7 @@
 
 import { Game } from './game.js';
 import { initEditor } from './editor.js';
-import { loadInitialCode, applyStudentCode, formatRuntimeError } from './workshop_loader.js';
+import { loadInitialCode, applyStudentCode, formatRuntimeError, evalInStudentState } from './workshop_loader.js';
 import { getWorkshopMode } from './workshop/config.js';
 import { renderMarkdown } from './workshop/markdown.js';
 import { watchCanvasResize } from './canvas_resize.js';
@@ -158,7 +158,7 @@ async function boot() {
   renderInstructions();
   setFocus('editor');
   syncGameControls();
-  initConsolePane(editorConsoleEl);
+  initConsolePane(editorConsoleEl, evalInStudentState);
   watchCanvasResize(canvas);
   initEntityPlacement(canvas, game);
 

@@ -10,7 +10,7 @@
 // incrémentale (une ligne ajoutée = un noeud ajouté), sous requestAnimationFrame.
 
 const MAX_LINES = 200;
-const PLACEHOLDER = 'Rien pour l’instant — utilise print(...) dans ton code.';
+const PLACEHOLDER = 'Tape du code Lua ici pour l’essayer.';
 
 let outEl = null;
 let emptyEl = null;
@@ -29,9 +29,9 @@ function atBottom() {
   return outEl.scrollHeight - outEl.scrollTop - outEl.clientHeight < 24;
 }
 
-function makeLine(text) {
+function makeLine(text, echo) {
   const el = document.createElement('div');
-  el.className = 'console-line';
+  el.className = echo ? 'console-line console-line-echo' : 'console-line';
   el.append(document.createTextNode(text));
   return el;
 }
@@ -46,7 +46,7 @@ function flush() {
 
   for (const line of lines) {
     if (!line.el) {
-      line.el = makeLine(line.text);
+      line.el = makeLine(line.text, line.echo);
       outEl.append(line.el);
     }
     if (line.count !== line.shownCount) {
@@ -77,11 +77,21 @@ export function consoleWrite(value) {
   if (last && last.text === text) {
     last.count += 1;
   } else {
-    lines.push({ text, count: 1, shownCount: 0, el: null, badge: null });
+    lines.push({ text, count: 1, shownCount: 0, el: null, badge: null, echo: false });
     while (lines.length > MAX_LINES) {
       const dropped = lines.shift();
       if (dropped.el) dropped.el.remove();
     }
+  }
+  schedule();
+}
+
+export function consoleEcho(text) {
+  const line = { text, count: 1, shownCount: 0, el: null, badge: null, echo: true };
+  lines.push(line);
+  while (lines.length > MAX_LINES) {
+    const dropped = lines.shift();
+    if (dropped.el) dropped.el.remove();
   }
   schedule();
 }
@@ -94,7 +104,7 @@ export function clearConsole() {
   schedule();
 }
 
-export function initConsolePane(root) {
+export function initConsolePane(root, onSubmit) {
   outEl = root.querySelector('.console-out');
   emptyEl = root.querySelector('.console-empty');
   emptyEl.textContent = PLACEHOLDER;
@@ -104,6 +114,32 @@ export function initConsolePane(root) {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
       clearConsole();
+    });
+  }
+
+  const input = root.querySelector('.console-input');
+  if (input && onSubmit) {
+    const history = [];
+    let cursor = 0;
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const src = input.value.trim();
+        if (!src) return;
+        history.push(src);
+        cursor = history.length;
+        input.value = '';
+        consoleEcho('> ' + src);
+        const result = onSubmit(src);
+        if (result !== null && result !== undefined && result !== '') consoleWrite(result);
+      } else if (e.key === 'ArrowUp' && history.length) {
+        cursor = Math.max(0, cursor - 1);
+        input.value = history[cursor] || '';
+        e.preventDefault();
+      } else if (e.key === 'ArrowDown' && history.length) {
+        cursor = Math.min(history.length, cursor + 1);
+        input.value = history[cursor] || '';
+        e.preventDefault();
+      }
     });
   }
 

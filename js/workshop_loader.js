@@ -55,6 +55,19 @@ export async function applyStudentCode(code, game, mode = getWorkshopMode()) {
   }
 }
 
+// La console évalue dans l'état Lua du dernier code valide : l'élève y retrouve
+// ses propres fonctions et ses variables globales.
+export function evalInStudentState(source) {
+  if (!lastGoodBindings || !lastGoodBindings.evalConsole) {
+    return 'Lance ton code une fois (bouton Démarrer) avant d’utiliser la console.';
+  }
+  try {
+    return lastGoodBindings.evalConsole(source);
+  } catch (err) {
+    return `Erreur : ${err && err.message ? err.message : String(err)}`;
+  }
+}
+
 export function formatRuntimeError(err, context) {
   const msg = err && err.message ? err.message : String(err);
   const fn = context || 'ton code';

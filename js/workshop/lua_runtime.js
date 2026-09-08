@@ -146,6 +146,25 @@ function createLuaState() {
         for i = 1, n do parts[i] = show((select(i, ...))) end
         emit(table.concat(parts, '\t'))
       end
+
+      -- REPL de la console. Il tourne dans le MÊME état Lua que le fichier de
+      -- l'élève : ses fonctions et ses variables globales sont donc visibles.
+      -- On tente d'abord un return implicite pour qu'une expression seule affiche sa
+      -- valeur (« 1 + 1 » donne 2) ; sinon on charge la ligne telle quelle.
+      function __ws_eval(src)
+        local chunk = load('return ' .. src, '=console')
+        if not chunk then
+          local err
+          chunk, err = load(src, '=console')
+          if not chunk then return 'Erreur : ' .. tostring(err) end
+        end
+        local r = table.pack(pcall(chunk))
+        if not r[1] then return 'Erreur : ' .. tostring(r[2]) end
+        if r.n < 2 then return nil end
+        local parts = {}
+        for i = 2, r.n do parts[#parts + 1] = show(r[i]) end
+        return table.concat(parts, '\t')
+      end
     `));
     if (status !== LUA_OK) {
       lua_settop(L, 0);
@@ -195,11 +214,6 @@ function createLuaState() {
     );
   }
 
-  function pushArg(arg) {
-    if (isPlainData(arg)) pushPlainTable(arg);
-    else push(L, arg);
-  }
-
   function callGlobal(name, args, { convertResult = true } = {}) {
     lua_getglobal(L, to_luastring(name));
     if (lua_type(L, -1) !== LUA_TFUNCTION) {
@@ -207,7 +221,7 @@ function createLuaState() {
       throw new Error(`Fonction ${name} introuvable`);
     }
 
-    args.forEach((arg) => pushArg(arg));
+    args.forEach((arg) => pushValue(arg));
 
     const status = lua_pcall(L, args.length, 1, 0);
     if (status !== LUA_OK) {
@@ -261,6 +275,9 @@ function createLuaState() {
     loadStudentSource,
     assertGlobalFunction,
     callGlobal,
+    evalConsole(source) {
+      return callGlobal('__ws_eval', [source]);
+    },
   };
 }
 
@@ -287,6 +304,8 @@ export function compileAndBindStudentCode(source, { requiresBuildInfos = true } 
       });
     },
   };
+
+  bindings.evalConsole = (src) => runtime.evalConsole(src);
 
   if (requiresBuildInfos) {
     bindings.buildInfos = (ghostCtx, pacmanCtx, map) =>

@@ -477,3 +477,38 @@ body.focus-game .pane-game {
 .console-count {
   color: #888;
 }
+
+/* --- Console : la ligne de saisie du REPL --- */
+
+.console-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 3px 7px;
+  background: #0c0c12;
+  border: 1px solid #555;
+  border-radius: 4px;
+}
+
+.console-prompt {
+  color: #6a9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.console-input {
+  flex: 1;
+  min-width: 0;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #eee;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 11px;
+}
+
+.console-line-echo {
+  color: #6a9;
+}
