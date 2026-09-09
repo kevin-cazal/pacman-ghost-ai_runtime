@@ -4,18 +4,11 @@ import { Game } from './game.js';
 import { initEditor } from './editor.js';
 import { loadInitialCode, applyStudentCode, formatRuntimeError, evalInStudentState } from './workshop_loader.js';
 import { getWorkshopMode } from './workshop/config.js';
-import { renderMarkdown } from './workshop/markdown.js';
 import { watchCanvasResize } from './canvas_resize.js';
 import { initEntityPlacement } from './entity_placement.js';
 import { initConsolePane, clearConsole } from './workshop/console_pane.js';
 
 const workshopMode = getWorkshopMode();
-
-const state = {
-  atelier: 1,
-};
-
-let ATELIER_MARKDOWN = null;
 
 const canvas = document.getElementById('game');
 const game = new Game(canvas);
@@ -29,10 +22,8 @@ game.onRuntimeError = (error) => {
   game.input.setEnabled(false);
   setFocus('editor');
 };
-const panelInstructions = document.getElementById('panel-instructions');
 const panelCode = document.getElementById('panel-code');
 const gamePane = document.getElementById('game-pane');
-const instructionsEl = document.getElementById('instructions');
 const btnStart = document.getElementById('btn-start');
 const btnReset = document.getElementById('btn-reset');
 const editorErrorEl = document.getElementById('editor-error');
@@ -53,27 +44,11 @@ function setFocus(mode) {
   game.input.setEnabled(mode === 'game' && game.started && !game.paused);
 }
 
-panelInstructions.addEventListener('mousedown', () => setFocus('editor'));
 panelCode.addEventListener('mousedown', () => setFocus('editor'));
 gamePane.addEventListener('mousedown', () => {
   setFocus('game');
   canvas.focus();
 });
-
-function renderInstructions() {
-  if (!ATELIER_MARKDOWN) {
-    instructionsEl.innerHTML = '<p class="instructions-loading">Chargement des instructions…</p>';
-    return;
-  }
-
-  const md = ATELIER_MARKDOWN[state.atelier];
-  if (!md) {
-    instructionsEl.innerHTML = '<p class="instructions-loading">Instructions indisponibles.</p>';
-    return;
-  }
-
-  instructionsEl.innerHTML = renderMarkdown(md);
-}
 
 function showError(message) {
   if (message) {
@@ -93,15 +68,6 @@ async function applyCurrentCode() {
   showError(error);
   return error;
 }
-
-document.querySelectorAll('.tab').forEach((tab) => {
-  tab.addEventListener('click', () => {
-    const atelier = Number(tab.dataset.atelier);
-    state.atelier = atelier;
-    document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t === tab));
-    renderInstructions();
-  });
-});
 
 btnStart.addEventListener('click', async (e) => {
   e.stopPropagation();
@@ -140,22 +106,6 @@ btnReset.addEventListener('click', (e) => {
 });
 
 async function boot() {
-  renderInstructions();
-
-  const stepsModule = await import(workshopMode.stepsPath);
-  try {
-    await stepsModule.loadWorkshopContent();
-  } catch (err) {
-    instructionsEl.innerHTML =
-      `<p class="instructions-loading">Impossible de charger les instructions : ${err.message}</p>`;
-    throw err;
-  }
-
-  ATELIER_MARKDOWN = stepsModule.ATELIER_MARKDOWN;
-
-  document.title = 'Mini Pac-Man — Atelier';
-
-  renderInstructions();
   setFocus('editor');
   syncGameControls();
   initConsolePane(editorConsoleEl, evalInStudentState);

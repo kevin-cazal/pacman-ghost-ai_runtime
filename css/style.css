@@ -21,7 +21,7 @@ html, body {
 
 .column-left {
   display: grid;
-  grid-template-rows: 1fr 1fr;
+  grid-template-rows: 1fr;
   min-width: 0;
   min-height: 0;
   border-right: 1px solid #333;
@@ -37,12 +37,6 @@ html, body {
   gap: 8px;
   padding: 12px;
   overflow: hidden;
-}
-
-.pane-instructions {
-  background: #14141e;
-  border-top: 1px solid #333;
-  min-height: 0;
 }
 
 .pane-code {
@@ -88,12 +82,6 @@ body.focus-game .pane-game {
 
 .pane-hint-game {
   margin-top: -4px;
-}
-
-.panel-header h1 {
-  font-size: 15px;
-  color: #fc0;
-  margin-top: 2px;
 }
 
 .workshop-help {
@@ -145,173 +133,6 @@ body.focus-game .pane-game {
 .workshop-help-body ul,
 .workshop-help-body ol {
   margin: 4px 0 6px 16px;
-}
-
-.atelier-tabs {
-  display: flex;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.tab {
-  flex: 1;
-  padding: 6px 8px;
-  border: 1px solid #444;
-  border-radius: 4px;
-  background: #222;
-  color: #ccc;
-  cursor: pointer;
-  font-size: 12px;
-}
-
-.tab.active {
-  background: #333;
-  color: #fc0;
-  border-color: #fc0;
-}
-
-.instructions {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  padding: 10px;
-  background: #1a1a24;
-  border: 1px solid #333;
-  border-radius: 4px;
-  font-size: 11px;
-  line-height: 1.45;
-}
-
-.instructions .instructions-loading {
-  color: #aaa;
-  font-style: italic;
-}
-
-.instructions h1 {
-  font-size: 1.4em;
-  font-weight: 600;
-  margin: 0 0 12px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #333;
-}
-
-.instructions h2 {
-  font-size: 1.15em;
-  font-weight: 600;
-  margin: 20px 0 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid #333;
-}
-
-.instructions h3 {
-  font-size: 1em;
-  font-weight: 600;
-  margin: 16px 0 6px;
-}
-
-.instructions h4 {
-  font-size: 0.95em;
-  font-weight: 600;
-  margin: 12px 0 4px;
-}
-
-.instructions p,
-.instructions ul,
-.instructions ol {
-  margin-bottom: 8px;
-}
-
-.instructions ul,
-.instructions ol {
-  padding-left: 1.5em;
-}
-
-.instructions li + li {
-  margin-top: 2px;
-}
-
-.instructions blockquote {
-  margin: 8px 0;
-  padding: 6px 8px;
-  border-left: 3px solid #555;
-  background: #1e1e2a;
-  color: #ccc;
-}
-
-.instructions blockquote p:last-child {
-  margin-bottom: 0;
-}
-
-.instructions hr {
-  border: none;
-  border-top: 1px solid #333;
-  margin: 10px 0;
-}
-
-.instructions a {
-  color: #8ab4f8;
-}
-
-.instructions strong {
-  color: #eee;
-}
-
-.instructions code {
-  background: #2a2a3a;
-  padding: 1px 4px;
-  border-radius: 3px;
-  font-size: 10px;
-}
-
-.instructions pre code {
-  background: transparent;
-  padding: 0;
-}
-
-.instructions table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 10px;
-  margin: 6px 0;
-}
-
-.instructions table th,
-.instructions table td {
-  border: 1px solid #444;
-  padding: 4px 6px;
-  text-align: left;
-}
-
-.instructions pre {
-  background: #0d0d14;
-  padding: 6px;
-  border-radius: 4px;
-  overflow-x: auto;
-  font-size: 10px;
-  margin: 6px 0;
-}
-
-.instructions .layout-diagram {
-  display: flex;
-  gap: 4px;
-  margin: 8px 0;
-  font-size: 9px;
-  text-align: center;
-}
-
-.instructions .layout-diagram .layout-pane {
-  flex: 1;
-  padding: 8px 4px;
-  border: 1px solid #555;
-  border-radius: 4px;
-  background: #222;
-  color: #aaa;
-}
-
-.instructions .layout-diagram .layout-pane strong {
-  display: block;
-  color: #fc0;
-  margin-bottom: 4px;
 }
 
 .editor-host {
