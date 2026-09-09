@@ -43,6 +43,19 @@ export function initEditor(host) {
           tabSize: 2,
           insertSpaces: true,
           folding: true,
+
+          // Rien n'apparaît que l'élève n'ait tapé. Monaco ferme normalement
+          // seul les ( [ { ' " : le débutant voit alors un caractère qu'il n'a
+          // pas voulu, le tape quand même, et se retrouve avec une paire de
+          // trop. Les cinq facettes de cette fermeture automatique sont donc
+          // coupées, y compris celles qui effacent ou survolent le caractère
+          // ajouté, qui surprennent tout autant.
+          autoClosingBrackets: 'never',
+          autoClosingQuotes: 'never',
+          autoClosingComments: 'never',
+          autoClosingDelete: 'never',
+          autoClosingOvertype: 'never',
+          autoSurround: 'never',
         });
         resolve(editor);
       },
