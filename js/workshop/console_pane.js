@@ -8,9 +8,15 @@
 // lignes par seconde. On plie donc les lignes identiques consécutives en
 // « × N », on borne l'historique, et on écrit dans le DOM de façon
 // incrémentale (une ligne ajoutée = un noeud ajouté), sous requestAnimationFrame.
+//
+// La saisie accepte les exemples sur plusieurs lignes des boîtes à outils : tant
+// que Lua signale un morceau incomplet, on garde les lignes de côté et l'invite
+// passe à « >> ». Une ligne vide, ou Échap, abandonne ce qui est en attente.
 
 const MAX_LINES = 200;
 const PLACEHOLDER = 'Tape du code Lua ici pour l’essayer.';
+const PLACEHOLDER_SUITE = 'Continue ton exemple, ou laisse vide pour annuler.';
+const INCOMPLET = '__WS_INCOMPLET__';
 
 let outEl = null;
 let emptyEl = null;
@@ -107,7 +113,6 @@ export function clearConsole() {
 export function initConsolePane(root, onSubmit) {
   outEl = root.querySelector('.console-out');
   emptyEl = root.querySelector('.console-empty');
-  emptyEl.textContent = PLACEHOLDER;
 
   const btn = root.querySelector('.console-clear');
   if (btn) {
@@ -118,18 +123,49 @@ export function initConsolePane(root, onSubmit) {
   }
 
   const input = root.querySelector('.console-input');
+  const promptEl = root.querySelector('.console-prompt');
   if (input && onSubmit) {
     const history = [];
     let cursor = 0;
+    let buffer = [];
+
+    const setPrompt = (suite) => {
+      if (promptEl) promptEl.textContent = suite ? '>>' : '>';
+      input.placeholder = suite ? PLACEHOLDER_SUITE : PLACEHOLDER;
+    };
+    const reset = () => {
+      buffer = [];
+      setPrompt(false);
+    };
+    setPrompt(false);
+
     input.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && buffer.length) {
+        input.value = '';
+        reset();
+        e.preventDefault();
+        return;
+      }
       if (e.key === 'Enter') {
-        const src = input.value.trim();
-        if (!src) return;
-        history.push(src);
+        const line = input.value.trim();
+        // Ligne vide : on abandonne le morceau en attente, sinon on ne fait rien.
+        if (!line) {
+          if (buffer.length) reset();
+          return;
+        }
+        history.push(line);
         cursor = history.length;
         input.value = '';
-        consoleEcho('> ' + src);
-        const result = onSubmit(src);
+        consoleEcho((buffer.length ? '>> ' : '> ') + line);
+
+        buffer.push(line);
+        const result = onSubmit(buffer.join('\n'));
+
+        if (result === INCOMPLET) {
+          setPrompt(true);
+          return;
+        }
+        reset();
         if (result !== null && result !== undefined && result !== '') consoleWrite(result);
       } else if (e.key === 'ArrowUp' && history.length) {
         cursor = Math.max(0, cursor - 1);

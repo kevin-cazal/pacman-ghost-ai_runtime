@@ -151,12 +151,22 @@ function createLuaState() {
       -- l'élève : ses fonctions et ses variables globales sont donc visibles.
       -- On tente d'abord un return implicite pour qu'une expression seule affiche sa
       -- valeur (« 1 + 1 » donne 2) ; sinon on charge la ligne telle quelle.
+      -- Les boîtes à outils du sujet montrent des exemples sur plusieurs lignes
+      -- (if / then / end). Quand le morceau tapé s'arrête avant sa fin, Lua le dit
+      -- en terminant son message par « <eof> ». On renvoie alors un marqueur, et la
+      -- console attend la ligne suivante au lieu d'afficher une erreur.
       function __ws_eval(src)
         local chunk = load('return ' .. src, '=console')
         if not chunk then
           local err
           chunk, err = load(src, '=console')
-          if not chunk then return 'Erreur : ' .. tostring(err) end
+          if not chunk then
+            local e = tostring(err)
+            if e:sub(-5) == '<eof>' or e:sub(-7) == "'<eof>'" then
+              return '__WS_INCOMPLET__'
+            end
+            return 'Erreur : ' .. e
+          end
         end
         local r = table.pack(pcall(chunk))
         if not r[1] then return 'Erreur : ' .. tostring(r[2]) end
