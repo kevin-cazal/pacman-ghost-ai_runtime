@@ -5,7 +5,7 @@ import { Input } from './input.js';
 import { Renderer } from './renderer.js';
 import { Pacman } from './entities/pacman.js';
 import { Ghost, resetGhostAICircuitBreaker } from './entities/ghost.js';
-import { SCARED_DURATION, DEATH_RESTART_DELAY, TILE_SIZE } from './config.js';
+import { SCARED_DURATION, DEATH_RESTART_DELAY, TILE_SIZE, COLS, ROWS } from './config.js';
 
 export class Game {
   constructor(canvas) {
@@ -190,7 +190,11 @@ export class Game {
 
     this.ghost.update(this.map, this.pacman, this, dt);
 
-    if (this._checkGhostCollision()) {
+    if (this.ghost.state === 'scared') {
+      if (this._ghostTouchesPacman()) {
+        this._onGhostEaten();
+      }
+    } else if (this._ghostTouchesPacman()) {
       this._onDeath();
       return;
     }
@@ -200,11 +204,7 @@ export class Game {
     }
   }
 
-  _checkGhostCollision() {
-    if (this.ghost.state === 'scared') {
-      return false;
-    }
-
+  _ghostTouchesPacman() {
     if (this.pacman.gridX === this.ghost.gridX && this.pacman.gridY === this.ghost.gridY) {
       return true;
     }
@@ -216,6 +216,49 @@ export class Game {
     const dx = pacmanCx - ghostCx;
     const dy = pacmanCy - ghostCy;
     return Math.sqrt(dx * dx + dy * dy) < TILE_SIZE * 0.75;
+  }
+
+  _checkGhostCollision() {
+    if (this.ghost.state === 'scared') {
+      return false;
+    }
+    return this._ghostTouchesPacman();
+  }
+
+  // Pac-Man rattrape un fantôme bleu. Avant, il le traversait et le fantôme
+  // restait là, toujours bleu : rien ne marquait qu'il s'était fait avoir.
+  // Il repart maintenant à l'autre bout de la carte, et la peur s'arrête là.
+  _onGhostEaten() {
+    const spot = this._farthestFreeTileFromPacman();
+    if (spot) {
+      this.placeGhost(spot.x, spot.y);
+    }
+    // Le compteur remis à zéro fait que `updateState` ne renverra plus 'scared'
+    // au tour suivant ; on change l'état tout de suite pour qu'il ne soit pas
+    // mangeable une deuxième fois pendant l'image en cours.
+    this.scaredTimer = 0;
+    this.ghost.state = 'patrol';
+  }
+
+  _farthestFreeTileFromPacman() {
+    let best = null;
+    let bestDistance = -1;
+
+    for (let y = 0; y < ROWS; y++) {
+      for (let x = 0; x < COLS; x++) {
+        if (this.map.isWall(x, y)) {
+          continue;
+        }
+        const distance =
+          Math.abs(x - this.pacman.gridX) + Math.abs(y - this.pacman.gridY);
+        if (distance > bestDistance) {
+          bestDistance = distance;
+          best = { x, y };
+        }
+      }
+    }
+
+    return best;
   }
 
   _onDeath() {
