@@ -1,18 +1,25 @@
 // NE PAS MODIFIER — code de base de l'atelier
 
-import { TILE_SIZE, COLS, ROWS, COLORS } from './config.js';
+import { TILE_SIZE, COLS, ROWS, COLORS, GAME_WIDTH, GAME_HEIGHT } from './config.js';
 
 export class Renderer {
   constructor(canvas) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
-    canvas.width = COLS * TILE_SIZE;
-    canvas.height = ROWS * TILE_SIZE;
+    if (!canvas.width || !canvas.height) {
+      canvas.width = GAME_WIDTH;
+      canvas.height = GAME_HEIGHT;
+    }
   }
 
+  // La mémoire du canvas est en pixels écran, le reste du fichier dessine en
+  // pixels de jeu. On pose donc l'échelle au début de chaque image : tout ce qui
+  // suit garde ses coordonnées en cases, et sort à la résolution de l'écran.
   clear() {
+    const scale = this.canvas.width / GAME_WIDTH;
+    this.ctx.setTransform(scale, 0, 0, scale, 0, 0);
     this.ctx.fillStyle = COLORS.background;
-    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+    this.ctx.fillRect(0, 0, GAME_WIDTH, GAME_HEIGHT);
   }
 
   drawMap(map) {
@@ -115,13 +122,13 @@ export class Renderer {
     this.ctx.textAlign = 'left';
     this.ctx.fillText(`Score: ${score}`, 8, 18);
     this.ctx.textAlign = 'right';
-    this.ctx.fillText(`Pac-gommes: ${pillsLeft}`, this.canvas.width - 8, 18);
+    this.ctx.fillText(`Pac-gommes: ${pillsLeft}`, GAME_WIDTH - 8, 18);
 
     if (message) {
       this.ctx.textAlign = 'center';
       this.ctx.fillStyle = COLORS[messageColor] || COLORS.text;
       this.ctx.font = 'bold 20px system-ui, sans-serif';
-      this.ctx.fillText(message, this.canvas.width / 2, this.canvas.height / 2);
+      this.ctx.fillText(message, GAME_WIDTH / 2, GAME_HEIGHT / 2);
     }
   }
 }

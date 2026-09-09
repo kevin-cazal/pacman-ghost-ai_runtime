@@ -228,10 +228,12 @@ body.focus-game .pane-game {
   justify-content: center;
 }
 
+/* Le canvas est dessine a la resolution de l'ecran (voir canvas_resize.js), donc
+   il n'y a plus d'agrandissement a absorber. « pixelated » forcait au contraire
+   un agrandissement au plus proche voisin : c'est lui qui crenelait les ronds et
+   le texte. */
 #game {
   display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
   outline: none;
 }
 

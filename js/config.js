@@ -5,6 +5,17 @@ export const TILE_SIZE = 24;
 export const COLS = 19;
 export const ROWS = 15;
 
+// Le repère de dessin, en « pixels de jeu ». Tout le rendu et le glisser-déposer
+// raisonnent dans ces unités, quelle que soit la taille réelle du canvas.
+export const GAME_WIDTH = COLS * TILE_SIZE;
+export const GAME_HEIGHT = ROWS * TILE_SIZE;
+
+// Le canvas est agrandi par le CSS pour remplir le panneau. Si sa mémoire reste
+// à GAME_WIDTH, le navigateur étire une image de 456 px : d'où les escaliers sur
+// les ronds et le flou sur le texte. On la dimensionne donc en pixels écran, en
+// bornant le facteur pour ne pas allouer une image démesurée sur un grand moniteur.
+export const MAX_RENDER_SCALE = 4;
+
 export const COLORS = {
   background: '#000000',
   wall: '#2121de',

@@ -1,11 +1,14 @@
 // NE PAS MODIFIER — glisser-déposer Pac-Man et fantôme sur la carte
 
-import { TILE_SIZE } from './config.js';
+import { TILE_SIZE, GAME_WIDTH, GAME_HEIGHT } from './config.js';
 
+// On ramène la souris en pixels de jeu, pas en pixels de la mémoire du canvas :
+// celle-ci suit la résolution de l'écran et n'a donc plus de rapport fixe avec
+// les cases.
 function canvasCoords(canvas, clientX, clientY) {
   const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
+  const scaleX = GAME_WIDTH / rect.width;
+  const scaleY = GAME_HEIGHT / rect.height;
   return {
     x: (clientX - rect.left) * scaleX,
     y: (clientY - rect.top) * scaleY,
