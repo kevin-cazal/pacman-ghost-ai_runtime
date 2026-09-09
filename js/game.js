@@ -95,6 +95,8 @@ export class Game {
     this.ghost.pixelX = this.ghost.gridX * TILE_SIZE;
     this.ghost.pixelY = this.ghost.gridY * TILE_SIZE;
     this.ghost.direction = null;
+    this.ghost.returning = false;
+    this.ghost.returnPath = [];
   }
 
   stop() {
@@ -112,6 +114,8 @@ export class Game {
     }
     if (this.ghost) {
       this.ghost.direction = null;
+      this.ghost.returning = false;
+      this.ghost.returnPath = [];
     }
   }
 
@@ -137,6 +141,8 @@ export class Game {
     this.ghost.pixelX = gridX * TILE_SIZE;
     this.ghost.pixelY = gridY * TILE_SIZE;
     this.ghost.direction = null;
+    this.ghost.returning = false;
+    this.ghost.returnPath = [];
     return true;
   }
 
@@ -188,9 +194,17 @@ export class Game {
       }
     }
 
+    const wasReturning = this.ghost.returning;
     this.ghost.update(this.map, this.pacman, this, dt);
 
-    if (this.ghost.state === 'scared') {
+    // Il vient d'arriver au bout de son trajet : c'est là que la peur s'arrête.
+    if (wasReturning && !this.ghost.returning) {
+      this.scaredTimer = 0;
+    }
+
+    if (this.ghost.returning) {
+      // En chemin : ni mangeable, ni mortel.
+    } else if (this.ghost.state === 'scared') {
       if (this._ghostTouchesPacman()) {
         this._onGhostEaten();
       }
@@ -219,7 +233,7 @@ export class Game {
   }
 
   _checkGhostCollision() {
-    if (this.ghost.state === 'scared') {
+    if (this.ghost.returning || this.ghost.state === 'scared') {
       return false;
     }
     return this._ghostTouchesPacman();
@@ -227,17 +241,15 @@ export class Game {
 
   // Pac-Man rattrape un fantôme bleu. Avant, il le traversait et le fantôme
   // restait là, toujours bleu : rien ne marquait qu'il s'était fait avoir.
-  // Il repart maintenant à l'autre bout de la carte, et la peur s'arrête là.
+  // Il repart maintenant, à travers les couloirs, vers la case libre la plus
+  // éloignée de Pac-Man. Le trajet le rend intouchable, et la peur s'arrête
+  // à l'arrivée, pas au moment de la morsure.
   _onGhostEaten() {
     const spot = this._farthestFreeTileFromPacman();
-    if (spot) {
-      this.placeGhost(spot.x, spot.y);
+    if (!spot) {
+      return;
     }
-    // Le compteur remis à zéro fait que `updateState` ne renverra plus 'scared'
-    // au tour suivant ; on change l'état tout de suite pour qu'il ne soit pas
-    // mangeable une deuxième fois pendant l'image en cours.
-    this.scaredTimer = 0;
-    this.ghost.state = 'patrol';
+    this.ghost.startReturn(this.map, spot.x, spot.y);
   }
 
   _farthestFreeTileFromPacman() {

@@ -86,8 +86,19 @@ export class Renderer {
     const cy = ghost.pixelY + TILE_SIZE / 2;
     const radius = TILE_SIZE / 2 - 2;
 
-    const color =
-      ghost.state === 'scared'
+    // Le fantôme qui rentre après s'être fait manger reste bleu, mais à moitié
+    // effacé : c'est ce qui dit à l'élève qu'on ne peut plus le toucher, ni
+    // dans un sens ni dans l'autre.
+    const returning = ghost.returning === true;
+
+    this.ctx.save();
+    if (returning) {
+      this.ctx.globalAlpha = 0.45;
+    }
+
+    const color = returning
+      ? COLORS.ghostScared
+      : ghost.state === 'scared'
         ? COLORS.ghostScared
         : ghost.state === 'patrol'
           ? COLORS.ghostPatrol
@@ -114,6 +125,8 @@ export class Renderer {
     this.ctx.arc(cx - 4, cy - 2, 1.5, 0, Math.PI * 2);
     this.ctx.arc(cx + 4, cy - 2, 1.5, 0, Math.PI * 2);
     this.ctx.fill();
+
+    this.ctx.restore();
   }
 
   drawHUD(score, pillsLeft, message, messageColor = 'win') {

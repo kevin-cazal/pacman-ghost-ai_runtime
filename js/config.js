@@ -46,6 +46,11 @@ export const SCARED_DURATION = 8;
 export const DEATH_RESTART_DELAY = 3;
 export const PATROL_LOCK_DURATION = 1.5;
 
+// Le fantôme mangé rentre plus vite qu'il ne se déplace normalement : la carte
+// fait vingt-huit cases de bout en bout, et le trajet ne doit pas mettre
+// l'élève en attente.
+export const GHOST_RETURN_SPEED_FACTOR = 2.5;
+
 export const DIRECTIONS = {
   up: { x: 0, y: -1 },
   down: { x: 0, y: 1 },

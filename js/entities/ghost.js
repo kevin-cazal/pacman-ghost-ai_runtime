@@ -1,6 +1,57 @@
 // NE PAS MODIFIER — code de base de l'atelier
 
-import { TILE_SIZE, SPEEDS, DIRECTIONS, PATROL_LOCK_DURATION } from '../config.js';
+import {
+  TILE_SIZE,
+  SPEEDS,
+  DIRECTIONS,
+  PATROL_LOCK_DURATION,
+  GHOST_RETURN_SPEED_FACTOR,
+} from '../config.js';
+
+// Parcours en largeur sur la grille : le plus court chemin d'une case à l'autre,
+// en ne passant que par des cases libres. Sert au retour du fantôme mangé, qui
+// traverse la carte tout seul au lieu d'être téléporté.
+function findPath(map, fromX, fromY, toX, toY) {
+  if (fromX === toX && fromY === toY) {
+    return [];
+  }
+
+  const key = (x, y) => `${x},${y}`;
+  const cameFrom = new Map([[key(fromX, fromY), null]]);
+  const queue = [[fromX, fromY]];
+
+  while (queue.length > 0) {
+    const [x, y] = queue.shift();
+
+    for (const dir of map.getWalkableNeighbors(x, y)) {
+      const d = DIRECTIONS[dir];
+      const nx = x + d.x;
+      const ny = y + d.y;
+      if (cameFrom.has(key(nx, ny))) {
+        continue;
+      }
+      cameFrom.set(key(nx, ny), { x, y, dir });
+
+      if (nx === toX && ny === toY) {
+        const path = [];
+        let cx = nx;
+        let cy = ny;
+        let step = cameFrom.get(key(cx, cy));
+        while (step) {
+          path.unshift(step.dir);
+          cx = step.x;
+          cy = step.y;
+          step = cameFrom.get(key(cx, cy));
+        }
+        return path;
+      }
+
+      queue.push([nx, ny]);
+    }
+  }
+
+  return null;
+}
 
 let chooseDirection = () => null;
 let updateState = () => 'patrol';
@@ -56,6 +107,24 @@ export class Ghost {
     this.state = 'patrol';
     this.patrolLockTimer = 0;
     this.speed = SPEEDS.ghost * TILE_SIZE;
+    // Retour après s'être fait manger : le fantôme rentre par ses propres
+    // moyens, sans passer par le code de l'élève, et ne peut ni tuer ni être
+    // mangé pendant le trajet.
+    this.returning = false;
+    this.returnPath = [];
+  }
+
+  startReturn(map, targetX, targetY) {
+    this._syncGridFromPixel();
+    // On recale sur le centre de la case : le chemin se suit case par case, et
+    // le fantôme peut avoir été touché entre deux.
+    this.pixelX = this.gridX * TILE_SIZE;
+    this.pixelY = this.gridY * TILE_SIZE;
+
+    this.returnPath = findPath(map, this.gridX, this.gridY, targetX, targetY) || [];
+    this.returning = true;
+    this.patrolLockTimer = 0;
+    this.direction = this.returnPath.length > 0 ? this.returnPath.shift() : null;
   }
 
   isAtCenter() {
@@ -109,6 +178,13 @@ export class Ghost {
   }
 
   update(map, pacman, game, dt) {
+    // Pendant le retour, le code de l'élève n'est pas consulté : le fantôme
+    // suit son chemin, puis rend la main telle qu'il l'avait prise.
+    if (this.returning) {
+      this._updateReturn(dt);
+      return;
+    }
+
     if (this.isAtCenter()) {
       this._syncGridFromPixel();
 
@@ -152,27 +228,48 @@ export class Ghost {
       this.patrolLockTimer = Math.max(0, this.patrolLockTimer - dt);
     }
 
-    if (this.direction) {
-      const d = DIRECTIONS[this.direction];
-      this.pixelX += d.x * this.speed * dt;
-      this.pixelY += d.y * this.speed * dt;
+    this._advance(dt, this.speed);
+  }
 
-      const targetX = (this.gridX + d.x) * TILE_SIZE;
-      const targetY = (this.gridY + d.y) * TILE_SIZE;
+  _updateReturn(dt) {
+    if (this.isAtCenter()) {
+      this._syncGridFromPixel();
 
-      if (d.x > 0 && this.pixelX >= targetX) {
-        this.pixelX = targetX;
-        this.gridX += d.x;
-      } else if (d.x < 0 && this.pixelX <= targetX) {
-        this.pixelX = targetX;
-        this.gridX += d.x;
-      } else if (d.y > 0 && this.pixelY >= targetY) {
-        this.pixelY = targetY;
-        this.gridY += d.y;
-      } else if (d.y < 0 && this.pixelY <= targetY) {
-        this.pixelY = targetY;
-        this.gridY += d.y;
+      if (this.returnPath.length === 0) {
+        this.returning = false;
+        this.direction = null;
+        return;
       }
+      this.direction = this.returnPath.shift();
+    }
+
+    this._advance(dt, this.speed * GHOST_RETURN_SPEED_FACTOR);
+  }
+
+  _advance(dt, speed) {
+    if (!this.direction) {
+      return;
+    }
+
+    const d = DIRECTIONS[this.direction];
+    this.pixelX += d.x * speed * dt;
+    this.pixelY += d.y * speed * dt;
+
+    const targetX = (this.gridX + d.x) * TILE_SIZE;
+    const targetY = (this.gridY + d.y) * TILE_SIZE;
+
+    if (d.x > 0 && this.pixelX >= targetX) {
+      this.pixelX = targetX;
+      this.gridX += d.x;
+    } else if (d.x < 0 && this.pixelX <= targetX) {
+      this.pixelX = targetX;
+      this.gridX += d.x;
+    } else if (d.y > 0 && this.pixelY >= targetY) {
+      this.pixelY = targetY;
+      this.gridY += d.y;
+    } else if (d.y < 0 && this.pixelY <= targetY) {
+      this.pixelY = targetY;
+      this.gridY += d.y;
     }
   }
 }
