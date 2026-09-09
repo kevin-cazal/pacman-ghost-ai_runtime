@@ -44,18 +44,55 @@ export function initEditor(host) {
           insertSpaces: true,
           folding: true,
 
-          // Rien n'apparaît que l'élève n'ait tapé. Monaco ferme normalement
-          // seul les ( [ { ' " : le débutant voit alors un caractère qu'il n'a
-          // pas voulu, le tape quand même, et se retrouve avec une paire de
-          // trop. Les cinq facettes de cette fermeture automatique sont donc
-          // coupées, y compris celles qui effacent ou survolent le caractère
-          // ajouté, qui surprennent tout autant.
+          // ---------------------------------------------------------------
+          // Rien n'apparaît que l'élève n'ait tapé.
+          //
+          // Les automatismes de Monaco font gagner du temps à qui sait déjà ce
+          // qu'il écrit. Pour un débutant ils font l'inverse : du texte arrive
+          // sans geste correspondant, et l'erreur qui suit ne se relie à rien
+          // de ce qu'il a fait. Tout ce qui insère ou réécrit du texte est donc
+          // coupé ici ; ce qui ne fait qu'afficher (coloration, numéros de
+          // ligne, repli) reste.
+          // ---------------------------------------------------------------
+
+          // Fermeture des paires : « print('bonjour » devenait
+          // « print('bonjour') », puis une paire de trop dès que l'élève tapait
+          // la sienne. Les facettes qui effacent ou survolent le caractère
+          // ajouté surprennent autant, d'où les six.
           autoClosingBrackets: 'never',
           autoClosingQuotes: 'never',
           autoClosingComments: 'never',
           autoClosingDelete: 'never',
           autoClosingOvertype: 'never',
           autoSurround: 'never',
+
+          // Suggestions. Le piège principal : la liste s'ouvre pendant la
+          // frappe, et Entrée valide la suggestion au lieu d'aller à la ligne.
+          // L'élève croit avoir fait un retour chariot, il a écrit un mot.
+          quickSuggestions: false,
+          suggestOnTriggerCharacters: false,
+          acceptSuggestionOnEnter: 'off',
+          acceptSuggestionOnCommitCharacter: false,
+          wordBasedSuggestions: 'off',
+          snippetSuggestions: 'none',
+          tabCompletion: 'off',
+          inlineSuggest: { enabled: false },
+          parameterHints: { enabled: false },
+
+          // Actions proposées et reformatage : ils réécrivent du code déjà tapé.
+          codeLens: false,
+          lightbulb: { enabled: false },
+          formatOnType: false,
+          formatOnPaste: false,
+
+          // L'indentation suit la ligne précédente, sans jamais réaligner une
+          // ligne déjà écrite : « keep » et non « full », qui décale le `end`
+          // tout seul au moment où on le tape.
+          autoIndent: 'keep',
+
+          // Déplacer du code en le glissant à la souris se fait sans s'en
+          // apercevoir, et ressemble à une disparition.
+          dragAndDrop: false,
         });
         resolve(editor);
       },
