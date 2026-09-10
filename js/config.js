@@ -52,9 +52,13 @@ export const PATROL_DIRECTION_DURATION = 1.5;
 export const GHOST_RETURN_SPEED_FACTOR = 2.5;
 
 // En poursuite, le fantôme accélère : à sa vitesse d'errance la chasse ne se
-// sent pas. Il reste sous Pac-Man (3,5 cases par seconde contre 4), donc on
-// peut toujours le semer en ligne droite, mais il recolle au moindre virage.
-export const GHOST_FOLLOW_SPEED_FACTOR = 7 / 6;
+// sent pas. 3,3 cases par seconde contre 3 en errance, et 4 pour Pac-Man.
+//
+// Le rapport est un réglage de ressenti, pas un résultat mesuré : un banc
+// automatique ne le départage pas, parce que la patrouille aléatoire pèse plus
+// lourd que la vitesse sur l'issue d'une poursuite. Il se règle en jouant.
+// 1,17 a été essayé et rendu : le fantôme ne lâchait plus.
+export const GHOST_FOLLOW_SPEED_FACTOR = 1.10;
 
 export const DIRECTIONS = {
   up: { x: 0, y: -1 },
