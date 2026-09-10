@@ -38,7 +38,7 @@ function toLuaGhost(ghostCtx) {
     Y: ghostCtx.gridY,
     direction: ghostCtx.direction,
     state: ghostCtx.state,
-    patrolLockTimer: ghostCtx.patrolLockTimer,
+    patrolDirectionTimer: ghostCtx.patrolDirectionTimer,
   };
 }
 
@@ -187,7 +187,7 @@ function createLuaState() {
   // deviennent des flottants Lua : `ghost.X` vaut alors 9.0, et un élève qui
   // écrit `print('x=' .. ghost.X)` lit « x=9.0 ». On construit donc une vraie
   // table Lua et on pousse chaque entier avec lua_pushinteger. Les valeurs
-  // réellement fractionnaires (scaredTimer, patrolLockTimer) restent flottantes.
+  // réellement fractionnaires (scaredTimer, patrolDirectionTimer) restent flottantes.
   function pushValue(v) {
     if (v === null || v === undefined) {
       lua_pushnil(L);

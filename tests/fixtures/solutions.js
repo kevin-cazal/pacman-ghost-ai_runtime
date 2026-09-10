@@ -177,7 +177,7 @@ end
     canGoLeft: !map.isWall(ghost.gridX - 1, ghost.gridY),
     canGoRight: !map.isWall(ghost.gridX + 1, ghost.gridY),
     currentDirection: ghost.direction,
-    patrolLockTimer: ghost.patrolLockTimer,
+    patrolDirectionTimer: ghost.patrolDirectionTimer,
     state: ghost.state,
   };
 }
@@ -185,10 +185,10 @@ end
 export function chooseDirection(infos, map) {
   if (infos.state !== 'patrol') return null;
 
-  if (infos.patrolLockTimer > 0 && infos.currentDirection === 'left' && infos.canGoLeft) {
+  if (infos.patrolDirectionTimer > 0 && infos.currentDirection === 'left' && infos.canGoLeft) {
     return 'left';
   }
-  if (infos.patrolLockTimer > 0 && infos.currentDirection === 'right' && infos.canGoRight) {
+  if (infos.patrolDirectionTimer > 0 && infos.currentDirection === 'right' && infos.canGoRight) {
     return 'right';
   }
   return null;
@@ -203,7 +203,7 @@ export function updateState(infos, game) {
     canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
     canGoRight = not map.isWall(ghost.X + 1, ghost.Y),
     currentDirection = ghost.direction,
-    patrolLockTimer = ghost.patrolLockTimer,
+    patrolDirectionTimer = ghost.patrolDirectionTimer,
     state = ghost.state,
   }
 end
@@ -211,10 +211,10 @@ end
 function chooseDirection(infos, map)
   if infos.state ~= 'patrol' then return nil end
 
-  if infos.patrolLockTimer > 0 and infos.currentDirection == 'left' and infos.canGoLeft then
+  if infos.patrolDirectionTimer > 0 and infos.currentDirection == 'left' and infos.canGoLeft then
     return 'left'
   end
-  if infos.patrolLockTimer > 0 and infos.currentDirection == 'right' and infos.canGoRight then
+  if infos.patrolDirectionTimer > 0 and infos.currentDirection == 'right' and infos.canGoRight then
     return 'right'
   end
   return nil
@@ -230,55 +230,55 @@ end
 export const SCENARIOS = [
   {
     name: 'ghost start, pacman to the right',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 12, gridY: 10 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'ghost start, pacman to the left',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 4, gridY: 10 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'ghost start, pacman diagonally up-right',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 12, gridY: 7 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'ghost start, pacman diagonally down-left',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 5, gridY: 12 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'patrol lock keeps left direction',
-    ghost: { gridX: 8, gridY: 10, direction: 'left', state: 'patrol', patrolLockTimer: 1.2 },
+    ghost: { gridX: 8, gridY: 10, direction: 'left', state: 'patrol', patrolDirectionTimer: 1.2 },
     pacman: { gridX: 12, gridY: 10 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'fsm follow when pacman is close',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 10, gridY: 10 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'fsm patrol when pacman is far',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 1, gridY: 1 },
     game: { scaredTimer: 0 },
   },
   {
     name: 'fsm scared when super pill active',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'follow', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'follow', patrolDirectionTimer: 0 },
     pacman: { gridX: 9, gridY: 10 },
     game: { scaredTimer: 4 },
   },
   {
     name: 'map corner is a wall',
-    ghost: { gridX: 1, gridY: 1, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 1, gridY: 1, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 8, gridY: 10 },
     game: { scaredTimer: 0 },
   },
@@ -287,7 +287,7 @@ export const SCENARIOS = [
 export const SIMULATION_SCENARIOS = [
   {
     name: 'chase moves ghost toward pacman on the right',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 14, gridY: 10 },
     game: { scaredTimer: 0 },
     steps: 180,
@@ -295,7 +295,7 @@ export const SIMULATION_SCENARIOS = [
   },
   {
     name: 'chase moves ghost toward pacman diagonally',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 },
+    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
     pacman: { gridX: 14, gridY: 7 },
     game: { scaredTimer: 0 },
     steps: 240,

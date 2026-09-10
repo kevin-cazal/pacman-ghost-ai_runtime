@@ -15,7 +15,7 @@ test.describe('workshop browser e2e', () => {
       const code = await response.text();
       const bindings = compileAndBindStudentCode(code);
       const map = new Map();
-      const ghost = { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolLockTimer: 0 };
+      const ghost = { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 };
       const pacman = { gridX: 12, gridY: 10 };
 
       return {

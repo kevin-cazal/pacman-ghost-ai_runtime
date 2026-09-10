@@ -93,7 +93,7 @@ export function simulateGhost(bindings, scenario, { requiresBuildInfos = true } 
 
   ghost.direction = scenario.ghost.direction ?? null;
   ghost.state = scenario.ghost.state ?? 'patrol';
-  ghost.patrolLockTimer = scenario.ghost.patrolLockTimer ?? 0;
+  ghost.patrolDirectionTimer = scenario.ghost.patrolDirectionTimer ?? 0;
   ghost.pixelX = ghost.gridX * TILE_SIZE;
   ghost.pixelY = ghost.gridY * TILE_SIZE;
 
