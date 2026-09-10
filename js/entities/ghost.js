@@ -6,6 +6,7 @@ import {
   DIRECTIONS,
   PATROL_DIRECTION_DURATION,
   GHOST_RETURN_SPEED_FACTOR,
+  GHOST_FOLLOW_SPEED_FACTOR,
 } from '../config.js';
 
 // Parcours en largeur sur la grille : le plus court chemin d'une case à l'autre,
@@ -228,7 +229,11 @@ export class Ghost {
       this.patrolDirectionTimer = Math.max(0, this.patrolDirectionTimer - dt);
     }
 
-    this._advance(dt, this.speed);
+    // En poursuite seulement : c'est ce qui fait la différence entre un fantôme
+    // qui erre et un fantôme qui te court après.
+    const speed =
+      this.state === 'follow' ? this.speed * GHOST_FOLLOW_SPEED_FACTOR : this.speed;
+    this._advance(dt, speed);
   }
 
   _updateReturn(dt) {

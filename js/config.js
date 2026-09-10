@@ -51,6 +51,11 @@ export const PATROL_DIRECTION_DURATION = 1.5;
 // l'élève en attente.
 export const GHOST_RETURN_SPEED_FACTOR = 2.5;
 
+// En poursuite, le fantôme accélère : à sa vitesse d'errance la chasse ne se
+// sent pas. Il reste sous Pac-Man (3,5 cases par seconde contre 4), donc on
+// peut toujours le semer en ligne droite, mais il recolle au moindre virage.
+export const GHOST_FOLLOW_SPEED_FACTOR = 7 / 6;
+
 export const DIRECTIONS = {
   up: { x: 0, y: -1 },
   down: { x: 0, y: 1 },
