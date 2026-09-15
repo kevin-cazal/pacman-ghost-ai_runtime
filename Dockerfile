@@ -11,7 +11,10 @@ RUN rm -rf node_modules
 
 FROM nginx:alpine
 
-COPY --from=build /app /usr/share/nginx/html
+COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Under the path the workshop platform embeds it at; docker/nginx.conf serves
+# it there and redirects any other version to it.
+COPY --from=build /app /usr/share/nginx/html/runtime/pacman/latest
 
 EXPOSE 80
 
