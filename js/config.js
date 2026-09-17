@@ -44,7 +44,10 @@ export const SCORE = {
 
 export const SCARED_DURATION = 8;
 export const DEATH_RESTART_DELAY = 3;
-export const PATROL_DIRECTION_DURATION = 1.5;
+
+// Le code de l'élève est appelé à cadence fixe, quelle que soit la fréquence de
+// l'écran : « 60 fois par seconde » est une promesse du sujet, pas une moyenne.
+export const AI_TICKS_PER_SECOND = 60;
 
 // Le fantôme mangé rentre plus vite qu'il ne se déplace normalement : la carte
 // fait vingt-huit cases de bout en bout, et le trajet ne doit pas mettre

@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test tests/parity.test.js",
+    "test": "node --test tests/ghost.test.js",
     "test:e2e": "playwright test",
     "test:all": "npm test && npm run test:e2e"
   },

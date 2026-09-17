@@ -22,34 +22,25 @@ export function saveCode(code, mode = getWorkshopMode()) {
   localStorage.setItem(mode.storageKey, code);
 }
 
+function bind(bindings, game) {
+  setGhostAI((ghostCtx, pacmanCtx, map, g) => bindings.think(ghostCtx, pacmanCtx, map, g));
+  setGhostAIErrorHandler((err, context) => {
+    game.handleRuntimeError(err, context);
+  });
+  bindings.refresh(game.ghost._context(), game.pacman._context(), game.map, game);
+}
+
 export async function applyStudentCode(code, game, mode = getWorkshopMode()) {
   try {
-    const bindings = compileAndBindStudentCode(code, {
-      requiresBuildInfos: mode.requiresBuildInfos,
-    });
-
-    setGhostAI(
-      bindings.chooseDirection,
-      bindings.updateState,
-      mode.requiresBuildInfos ? bindings.buildInfos : null
-    );
-    setGhostAIErrorHandler((err, context) => {
-      game.handleRuntimeError(err, context);
-    });
+    const bindings = compileAndBindStudentCode(code);
+    bind(bindings, game);
     lastGoodBindings = bindings;
     saveCode(code, mode);
     game.clearRuntimeError();
     return null;
   } catch (err) {
     if (lastGoodBindings) {
-      setGhostAI(
-        lastGoodBindings.chooseDirection,
-        lastGoodBindings.updateState,
-        mode.requiresBuildInfos ? lastGoodBindings.buildInfos : null
-      );
-      setGhostAIErrorHandler((err, context) => {
-        game.handleRuntimeError(err, context);
-      });
+      bind(lastGoodBindings, game);
     }
     return formatError(err);
   }
@@ -73,7 +64,7 @@ export function formatRuntimeError(err, context) {
   const fn = context || 'ton code';
 
   if (msg.includes('attempt to index') && msg.includes('nil value')) {
-    return `Erreur à l'exécution (${fn}) : ${msg} — Vérifie les noms de variables (ex. infos, pas info). Clique Arrêter, corrige, puis Démarrer.`;
+    return `Erreur à l'exécution (${fn}) : ${msg} — Vérifie les noms : me, pacman, map, game, et tes propres variables. Clique Arrêter, corrige, puis Démarrer.`;
   }
   if (msg.includes('attempt to call') && msg.includes('nil value')) {
     return `Erreur à l'exécution (${fn}) : ${msg} — Tu as peut-être oublié une propriété ou appelé une valeur qui n'est pas une fonction. Clique Arrêter, corrige, puis Démarrer.`;
@@ -92,14 +83,8 @@ function formatError(err) {
   ) {
     return `Erreur de syntaxe : ${msg} — Vérifie les mots-clés then/end, les parenthèses et les virgules. Le dernier code valide est toujours utilisé : corrige puis reclique Démarrer.`;
   }
-  if (msg.includes('buildInfos manquante')) {
-    return `Fonction buildInfos manquante — la fonction buildInfos doit rester dans le fichier.`;
-  }
-  if (msg.includes('chooseDirection manquante')) {
-    return `Fonction chooseDirection manquante — la fonction chooseDirection doit rester dans le fichier.`;
-  }
-  if (msg.includes('updateState manquante')) {
-    return `Fonction updateState manquante — la fonction updateState doit rester dans le fichier.`;
+  if (msg.includes('ghost manquante')) {
+    return `Fonction ghost manquante — la ligne \`function ghost()\` et son \`end\` doivent rester dans le fichier.`;
   }
   if (msg.includes('Fengari non chargé')) {
     return `${msg}`;

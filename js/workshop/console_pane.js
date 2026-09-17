@@ -3,9 +3,8 @@
 // Sortie de `print(...)` pour le code Lua des élèves. Le but est qu'un élève
 // n'ait jamais à ouvrir la console du navigateur.
 //
-// Deux contraintes viennent du jeu : `buildInfos` et `chooseDirection` sont
-// appelées à la fréquence d'affichage, donc un `print` dedans produit ~60
-// lignes par seconde. On plie donc les lignes identiques consécutives en
+// Une contrainte vient du jeu : `ghost` est appelée 60 fois par seconde, donc
+// un `print` dedans produit 60 lignes par seconde. On plie donc les lignes identiques consécutives en
 // « × N », on borne l'historique, et on écrit dans le DOM de façon
 // incrémentale (une ligne ajoutée = un noeud ajouté), sous requestAnimationFrame.
 //
