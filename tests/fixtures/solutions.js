@@ -15,7 +15,6 @@ end
   if canGoLeft then
     return 'left'
   end
-  return nil
 end
 `,
 
@@ -39,7 +38,6 @@ end
     if canGoLeft and distanceX < 0 then return 'left' end
     if canGoRight and distanceX > 0 then return 'right' end
   end
-  return nil
 end
 `,
 
@@ -54,8 +52,6 @@ function ghost()
   state = 'patrol'
   if totalDistance <= 5 then state = 'follow' end
   if game.scaredTimer > 0 then state = 'scared' end
-
-  return nil
 end
 `,
 
