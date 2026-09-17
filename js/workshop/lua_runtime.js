@@ -297,7 +297,7 @@ function createLuaState() {
 }
 
 // Ce que le jeu met à disposition du code de l'élève, avant chaque appel de
-// `ghost`. Ce sont des globales Lua : la console les voit aussi, un élève peut
+// `ghost`, c'est-à-dire à chaque case. Ce sont des globales Lua : la console les voit aussi, un élève peut
 // y taper `pacman.X` et lire la position du moment.
 function refreshGlobals(runtime, ghostCtx, pacmanCtx, map, game) {
   runtime.setGlobal('me', toLuaMe(ghostCtx));

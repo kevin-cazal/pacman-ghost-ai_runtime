@@ -70,17 +70,24 @@ end`);
 });
 
 describe('le fantôme dans le jeu', () => {
-  it('ghost est appelée 60 fois par seconde, quelle que soit la cadence d’affichage', () => {
-    for (const [fps, seconds] of [[60, 2], [144, 2], [30, 2]]) {
-      const bindings = compileAndBindStudentCode(FIXTURES.counter);
-      simulateGhost(bindings, {
-        me: START,
-        pacman: { X: 12, Y: 10 },
-        steps: fps * seconds,
-        dt: 1 / fps,
-      });
-      assert.equal(bindings.evalConsole('calls'), String(60 * seconds), `à ${fps} images/s`);
-    }
+  it('ghost est appelée à chaque case, pas à chaque image', () => {
+    const bindings = compileAndBindStudentCode(FIXTURES.counter);
+    // Une seconde à 3 cases par seconde : l'appel du départ, puis un à chaque
+    // arrivée sur une case, soit 3 appels pour 60 images.
+    simulateGhost(bindings, { me: START, pacman: { X: 12, Y: 10 }, steps: 60 });
+    assert.equal(bindings.evalConsole('calls'), '3');
+  });
+
+  it('arrêté, il redemande à chaque image jusqu’à obtenir une direction', () => {
+    const bindings = compileAndBindStudentCode(`calls = 0
+function ghost()
+  calls = calls + 1
+  if calls < 10 then return nil end
+  return 'right'
+end`);
+    const { trace } = simulateGhost(bindings, { me: START, pacman: { X: 12, Y: 10 }, steps: 30 });
+    assert.equal(trace[8].direction, null);
+    assert.equal(trace[9].direction, 'right');
   });
 
   it('la poursuite amène le fantôme sur la case de Pac-Man, puis il s’arrête', () => {
@@ -124,7 +131,7 @@ end`);
     for (let i = 1; i < trace.length; i += 1) {
       if (trace[i].direction !== trace[i - 1].direction) changes += 1;
     }
-    // 6 s à 1,5 s par segment : 4 virages, plus ceux que les murs imposent.
+    // 6 s font 18 cases ; à 5 cases par segment, 3 virages, plus ceux que les murs imposent.
     assert.ok(changes >= 2 && changes <= 8, `${changes} changements de direction`);
     const visited = new Set(trace.map((f) => `${f.gridX},${f.gridY}`));
     assert.ok(visited.size >= 8, `${visited.size} cases visitées`);

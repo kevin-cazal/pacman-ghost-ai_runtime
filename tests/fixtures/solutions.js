@@ -59,7 +59,7 @@ function ghost()
 end
 `,
 
-  // Bonus « Tenir sa direction » : compter les appels pour compter le temps.
+  // Bonus « Tenir sa direction » : compter les appels, c'est compter les cases.
   holdDirection: `math.randomseed(1)
 state = 'patrol'
 compteur = 0
@@ -71,7 +71,7 @@ function ghost()
   canGoDown = not map.isWall(me.X, me.Y + 1)
 
   compteur = compteur + 1
-  if compteur < 90 then
+  if compteur < 5 then
     if me.direction == 'left' and canGoLeft then return 'left' end
     if me.direction == 'right' and canGoRight then return 'right' end
     if me.direction == 'up' and canGoUp then return 'up' end
@@ -89,12 +89,12 @@ function ghost()
 end
 `,
 
-  // Compte les appels : sert à vérifier la cadence promise par le sujet.
+  // Compte les appels : sert à vérifier qu'il y en a un par case, pas par image.
   counter: `calls = 0
 
 function ghost()
   calls = calls + 1
-  return nil
+  return 'right'
 end
 `,
 };

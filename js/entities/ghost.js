@@ -4,12 +4,9 @@ import {
   TILE_SIZE,
   SPEEDS,
   DIRECTIONS,
-  AI_TICKS_PER_SECOND,
   GHOST_RETURN_SPEED_FACTOR,
   GHOST_FOLLOW_SPEED_FACTOR,
 } from '../config.js';
-
-const AI_TICK = 1 / AI_TICKS_PER_SECOND;
 
 // Parcours en largeur sur la grille : le plus court chemin d'une case à l'autre,
 // en ne passant que par des cases libres. Sert au retour du fantôme mangé, qui
@@ -56,10 +53,10 @@ function findPath(map, fromX, fromY, toX, toY) {
   return null;
 }
 
-// Le code de l'élève tient dans une seule fonction, `ghost`, appelée à cadence
-// fixe. Elle lit l'état du jeu dans des globales (me, pacman, map, game),
-// renvoie une direction ou nil, et range l'humeur du fantôme dans la globale
-// `state`. Le pont Lua renvoie les deux d'un coup : { direction, state }.
+// Le code de l'élève tient dans une seule fonction, `ghost`, appelée chaque
+// fois que le fantôme est au centre d'une case : c'est là qu'il choisit. Elle
+// lit l'état du jeu dans des globales (me, pacman, map, game), renvoie une
+// direction ou nil, et range l'humeur du fantôme dans la globale `state`. Le pont Lua renvoie les deux d'un coup : { direction, state }.
 let think = () => ({ direction: null, state: 'patrol' });
 let onAiError = null;
 let aiDisabled = false;
@@ -108,10 +105,6 @@ export class Ghost {
     this.pixelY = startY * TILE_SIZE;
     this.direction = null;
     this.state = 'patrol';
-    // La dernière réponse de `ghost` ; elle ne prend effet qu'au centre d'une
-    // case, un demi-tour au milieu d'un couloir n'ayant pas de sens sur la grille.
-    this.wantedDirection = null;
-    this.aiAccumulator = 0;
     this.speed = SPEEDS.ghost * TILE_SIZE;
     // Retour après s'être fait manger : le fantôme rentre par ses propres
     // moyens, sans passer par le code de l'élève, et ne peut ni tuer ni être
@@ -129,7 +122,6 @@ export class Ghost {
 
     this.returnPath = findPath(map, this.gridX, this.gridY, targetX, targetY) || [];
     this.returning = true;
-    this.wantedDirection = null;
     this.direction = this.returnPath.length > 0 ? this.returnPath.shift() : null;
   }
 
@@ -141,21 +133,17 @@ export class Ghost {
     return Math.abs(cx - centerX) < 1 && Math.abs(cy - centerY) < 1;
   }
 
-  // `me.direction` est la dernière réponse du code, pas le sens du déplacement
-  // en cours. Appelé soixante fois par seconde, un code qui relit sa décision
-  // précédente (« continue tout droit ») doit retrouver ce qu'il vient de
-  // répondre : sinon un tirage fait au milieu d'une case est écrasé à l'appel
-  // suivant, et seul un tirage tombé pile sur un centre compte.
   _context() {
     return {
       gridX: this.gridX,
       gridY: this.gridY,
-      direction: this.wantedDirection,
+      direction: this.direction,
     };
   }
 
-  // Un appel de `ghost`. La direction voulue est mise de côté, l'humeur est
-  // appliquée tout de suite : la couleur change à l'instant où le code le dit.
+  // Un appel de `ghost` : la réponse devient la direction, et `state` l'humeur.
+  // Une réponse absente ou inconnue arrête le fantôme (c'est le « je ne fais
+  // rien » du sujet) ; une humeur absente ou inconnue vaut patrol.
   _think(map, pacman, game) {
     const answer = safeCall(
       () => think(this._context(), pacman._context(), map, game),
@@ -164,7 +152,7 @@ export class Ghost {
     );
 
     const direction = answer ? answer.direction : null;
-    this.wantedDirection = VALID_DIRECTIONS.has(direction) ? direction : null;
+    this.direction = VALID_DIRECTIONS.has(direction) ? direction : null;
 
     const state = answer ? answer.state : null;
     this.state = VALID_STATES.has(state) ? state : 'patrol';
@@ -183,19 +171,12 @@ export class Ghost {
       return;
     }
 
-    // Cadence fixe : un écran à 144 Hz ne fait pas réfléchir le fantôme plus
-    // vite, et un écran lent ne lui fait pas sauter d'appel.
-    this.aiAccumulator += dt;
-    // L'epsilon absorbe la dérive des flottants : 288 pas de 1/144 doivent
-    // donner 120 appels, pas 119.
-    while (this.aiAccumulator >= AI_TICK - 1e-9) {
-      this.aiAccumulator -= AI_TICK;
-      this._think(map, pacman, game);
-    }
-
+    // Au centre d'une case, et seulement là : entre deux cases le fantôme
+    // finit son déplacement. Arrêté, il est au centre à chaque image, et le
+    // code est donc redemandé à chaque image jusqu'à ce qu'il réponde.
     if (this.isAtCenter()) {
       this._syncGridFromPixel();
-      this.direction = this.wantedDirection;
+      this._think(map, pacman, game);
     }
 
     // En poursuite seulement : c'est ce qui fait la différence entre un fantôme
