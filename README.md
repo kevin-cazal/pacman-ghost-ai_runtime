@@ -36,4 +36,4 @@ Lua nécessitent HTTP).
 Le runtime est monté dans une iframe de même origine et pilote un petit protocole postMessage
 (WRP). Il n'a besoin d'aucun code spécifique pour cela : l'adaptateur est injecté par l'hôte. Le
 code de l'élève est sauvegardé automatiquement dans `localStorage`, clé
-`mini_pacman_ghost_ai_lua_v1`.
+`mini_pacman_ghost_v2`.

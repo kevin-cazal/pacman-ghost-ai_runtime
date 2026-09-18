@@ -1,304 +1,96 @@
+// Code élève de référence, au format de l'atelier : une seule fonction `ghost`,
+// des globales fournies par le jeu (me, pacman, map, game), et la globale
+// `state` pour l'humeur. Chaque fixture est ce qu'un élève a dans son éditeur
+// à une étape donnée du sujet.
+
 export const FIXTURES = {
-  template: {
-    js: `export function buildInfos(ghost, pacman, map) {
-  return {};
-}
-
-export function chooseDirection(infos, map) {
-  return null;
-}
-
-export function updateState(infos, game) {
-  return 'patrol';
-}
-`,
-    lua: `function buildInfos(ghost, pacman, map)
-  return {}
-end
-
-function chooseDirection(infos, map)
+  template: `function ghost()
   return nil
 end
-
-function updateState(infos, game)
-  return 'patrol'
-end
 `,
-  },
 
-  canGoLeft: {
-    js: `export function buildInfos(ghost, pacman, map) {
-  return {
-    canGoLeft: !map.isWall(ghost.gridX - 1, ghost.gridY),
-  };
-}
-
-export function chooseDirection(infos, map) {
-  if (infos.canGoLeft) {
-    return 'left';
-  }
-  return null;
-}
-
-export function updateState(infos, game) {
-  return 'patrol';
-}
-`,
-    lua: `function buildInfos(ghost, pacman, map)
-  return {
-    canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
-  }
-end
-
-function chooseDirection(infos, map)
-  if infos.canGoLeft then
+  // Partie 1, étape 2.
+  canGoLeft: `function ghost()
+  canGoLeft = not map.isWall(me.X - 1, me.Y)
+  if canGoLeft then
     return 'left'
   end
-  return nil
-end
-
-function updateState(infos, game)
-  return 'patrol'
 end
 `,
-  },
 
-  chaseOptimized: {
-    js: `function tryHorizontal(infos) {
-  if (infos.canGoLeft && infos.distanceX < 0) return 'left';
-  if (infos.canGoRight && infos.distanceX > 0) return 'right';
-  return null;
-}
+  // Partie 1, étape 7 : l'axe où l'écart est le plus grand d'abord.
+  chase: `function ghost()
+  canGoLeft = not map.isWall(me.X - 1, me.Y)
+  canGoRight = not map.isWall(me.X + 1, me.Y)
+  canGoUp = not map.isWall(me.X, me.Y - 1)
+  canGoDown = not map.isWall(me.X, me.Y + 1)
+  distanceX = pacman.X - me.X
+  distanceY = pacman.Y - me.Y
 
-function tryVertical(infos) {
-  if (infos.canGoUp && infos.distanceY < 0) return 'up';
-  if (infos.canGoDown && infos.distanceY > 0) return 'down';
-  return null;
-}
-
-export function buildInfos(ghost, pacman, map) {
-  return {
-    canGoUp: !map.isWall(ghost.gridX, ghost.gridY - 1),
-    canGoDown: !map.isWall(ghost.gridX, ghost.gridY + 1),
-    canGoLeft: !map.isWall(ghost.gridX - 1, ghost.gridY),
-    canGoRight: !map.isWall(ghost.gridX + 1, ghost.gridY),
-    distanceX: pacman.gridX - ghost.gridX,
-    distanceY: pacman.gridY - ghost.gridY,
-  };
-}
-
-export function chooseDirection(infos, map) {
-  if (Math.abs(infos.distanceX) > Math.abs(infos.distanceY)) {
-    return tryHorizontal(infos) || tryVertical(infos);
-  }
-  return tryVertical(infos) || tryHorizontal(infos);
-}
-
-export function updateState(infos, game) {
-  return 'patrol';
-}
-`,
-    lua: `local function tryHorizontal(infos)
-  if infos.canGoLeft and infos.distanceX < 0 then return 'left' end
-  if infos.canGoRight and infos.distanceX > 0 then return 'right' end
-  return nil
-end
-
-local function tryVertical(infos)
-  if infos.canGoUp and infos.distanceY < 0 then return 'up' end
-  if infos.canGoDown and infos.distanceY > 0 then return 'down' end
-  return nil
-end
-
-function buildInfos(ghost, pacman, map)
-  return {
-    canGoUp = not map.isWall(ghost.X, ghost.Y - 1),
-    canGoDown = not map.isWall(ghost.X, ghost.Y + 1),
-    canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
-    canGoRight = not map.isWall(ghost.X + 1, ghost.Y),
-    distanceX = pacman.X - ghost.X,
-    distanceY = pacman.Y - ghost.Y,
-  }
-end
-
-function chooseDirection(infos, map)
-  if math.abs(infos.distanceX) > math.abs(infos.distanceY) then
-    return tryHorizontal(infos) or tryVertical(infos)
+  if math.abs(distanceX) > math.abs(distanceY) then
+    if canGoLeft and distanceX < 0 then return 'left' end
+    if canGoRight and distanceX > 0 then return 'right' end
+    if canGoUp and distanceY < 0 then return 'up' end
+    if canGoDown and distanceY > 0 then return 'down' end
+  else
+    if canGoUp and distanceY < 0 then return 'up' end
+    if canGoDown and distanceY > 0 then return 'down' end
+    if canGoLeft and distanceX < 0 then return 'left' end
+    if canGoRight and distanceX > 0 then return 'right' end
   end
-  return tryVertical(infos) or tryHorizontal(infos)
-end
-
-function updateState(infos, game)
-  return 'patrol'
 end
 `,
-  },
 
-  fsmStates: {
-    js: `export function buildInfos(ghost, pacman, map) {
-  return {
-    totalDistance: Math.abs(pacman.gridX - ghost.gridX) + Math.abs(pacman.gridY - ghost.gridY),
-    state: ghost.state,
-  };
-}
+  // Partie 2, étape 3 : les trois humeurs, sans les règles de déplacement.
+  fsm: `state = 'patrol'
 
-export function chooseDirection(infos, map) {
-  return null;
-}
+function ghost()
+  distanceX = pacman.X - me.X
+  distanceY = pacman.Y - me.Y
+  totalDistance = math.abs(distanceX) + math.abs(distanceY)
 
-export function updateState(infos, game) {
-  if (game.scaredTimer > 0) return 'scared';
-  if (infos.totalDistance <= 8) return 'follow';
-  return 'patrol';
-}
-`,
-    lua: `function buildInfos(ghost, pacman, map)
-  return {
-    totalDistance = math.abs(pacman.X - ghost.X) + math.abs(pacman.Y - ghost.Y),
-    state = ghost.state,
-  }
-end
-
-function chooseDirection(infos, map)
-  return nil
-end
-
-function updateState(infos, game)
-  if game.scaredTimer > 0 then return 'scared' end
-  if infos.totalDistance <= 8 then return 'follow' end
-  return 'patrol'
+  state = 'patrol'
+  if totalDistance <= 5 then state = 'follow' end
+  if game.scaredTimer > 0 then state = 'scared' end
 end
 `,
-  },
 
-  patrolLock: {
-    js: `export function buildInfos(ghost, pacman, map) {
-  return {
-    canGoLeft: !map.isWall(ghost.gridX - 1, ghost.gridY),
-    canGoRight: !map.isWall(ghost.gridX + 1, ghost.gridY),
-    currentDirection: ghost.direction,
-    patrolDirectionTimer: ghost.patrolDirectionTimer,
-    state: ghost.state,
-  };
-}
+  // Bonus « Tenir sa direction » : compter les appels, c'est compter les cases.
+  holdDirection: `math.randomseed(1)
+state = 'patrol'
+compteur = 0
 
-export function chooseDirection(infos, map) {
-  if (infos.state !== 'patrol') return null;
+function ghost()
+  canGoLeft = not map.isWall(me.X - 1, me.Y)
+  canGoRight = not map.isWall(me.X + 1, me.Y)
+  canGoUp = not map.isWall(me.X, me.Y - 1)
+  canGoDown = not map.isWall(me.X, me.Y + 1)
 
-  if (infos.patrolDirectionTimer > 0 && infos.currentDirection === 'left' && infos.canGoLeft) {
-    return 'left';
-  }
-  if (infos.patrolDirectionTimer > 0 && infos.currentDirection === 'right' && infos.canGoRight) {
-    return 'right';
-  }
-  return null;
-}
-
-export function updateState(infos, game) {
-  return 'patrol';
-}
-`,
-    lua: `function buildInfos(ghost, pacman, map)
-  return {
-    canGoLeft = not map.isWall(ghost.X - 1, ghost.Y),
-    canGoRight = not map.isWall(ghost.X + 1, ghost.Y),
-    currentDirection = ghost.direction,
-    patrolDirectionTimer = ghost.patrolDirectionTimer,
-    state = ghost.state,
-  }
-end
-
-function chooseDirection(infos, map)
-  if infos.state ~= 'patrol' then return nil end
-
-  if infos.patrolDirectionTimer > 0 and infos.currentDirection == 'left' and infos.canGoLeft then
-    return 'left'
+  compteur = compteur + 1
+  if compteur < 5 then
+    if me.direction == 'left' and canGoLeft then return 'left' end
+    if me.direction == 'right' and canGoRight then return 'right' end
+    if me.direction == 'up' and canGoUp then return 'up' end
+    if me.direction == 'down' and canGoDown then return 'down' end
   end
-  if infos.patrolDirectionTimer > 0 and infos.currentDirection == 'right' and infos.canGoRight then
-    return 'right'
-  end
-  return nil
-end
 
-function updateState(infos, game)
-  return 'patrol'
+  compteur = 0
+  possibleDirections = {}
+  if canGoLeft then table.insert(possibleDirections, 'left') end
+  if canGoRight then table.insert(possibleDirections, 'right') end
+  if canGoUp then table.insert(possibleDirections, 'up') end
+  if canGoDown then table.insert(possibleDirections, 'down') end
+  index = math.random(1, #possibleDirections)
+  return possibleDirections[index]
 end
 `,
-  },
+
+  // Compte les appels : sert à vérifier qu'il y en a un par case, pas par image.
+  counter: `calls = 0
+
+function ghost()
+  calls = calls + 1
+  return 'right'
+end
+`,
 };
-
-export const SCENARIOS = [
-  {
-    name: 'ghost start, pacman to the right',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 12, gridY: 10 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'ghost start, pacman to the left',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 4, gridY: 10 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'ghost start, pacman diagonally up-right',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 12, gridY: 7 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'ghost start, pacman diagonally down-left',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 5, gridY: 12 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'patrol lock keeps left direction',
-    ghost: { gridX: 8, gridY: 10, direction: 'left', state: 'patrol', patrolDirectionTimer: 1.2 },
-    pacman: { gridX: 12, gridY: 10 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'fsm follow when pacman is close',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 10, gridY: 10 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'fsm patrol when pacman is far',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 1, gridY: 1 },
-    game: { scaredTimer: 0 },
-  },
-  {
-    name: 'fsm scared when super pill active',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'follow', patrolDirectionTimer: 0 },
-    pacman: { gridX: 9, gridY: 10 },
-    game: { scaredTimer: 4 },
-  },
-  {
-    name: 'map corner is a wall',
-    ghost: { gridX: 1, gridY: 1, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 8, gridY: 10 },
-    game: { scaredTimer: 0 },
-  },
-];
-
-export const SIMULATION_SCENARIOS = [
-  {
-    name: 'chase moves ghost toward pacman on the right',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 14, gridY: 10 },
-    game: { scaredTimer: 0 },
-    steps: 180,
-    dt: 1 / 60,
-  },
-  {
-    name: 'chase moves ghost toward pacman diagonally',
-    ghost: { gridX: 8, gridY: 10, direction: null, state: 'patrol', patrolDirectionTimer: 0 },
-    pacman: { gridX: 14, gridY: 7 },
-    game: { scaredTimer: 0 },
-    steps: 240,
-    dt: 1 / 60,
-  },
-];

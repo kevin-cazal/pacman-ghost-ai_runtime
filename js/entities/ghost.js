@@ -4,7 +4,6 @@ import {
   TILE_SIZE,
   SPEEDS,
   DIRECTIONS,
-  PATROL_DIRECTION_DURATION,
   GHOST_RETURN_SPEED_FACTOR,
   GHOST_FOLLOW_SPEED_FACTOR,
 } from '../config.js';
@@ -54,19 +53,19 @@ function findPath(map, fromX, fromY, toX, toY) {
   return null;
 }
 
-let chooseDirection = () => null;
-let updateState = () => 'patrol';
-let buildInfosFn = null;
+// Le code de l'élève tient dans une seule fonction, `ghost`, appelée chaque
+// fois que le fantôme est au centre d'une case : c'est là qu'il choisit. Elle
+// lit l'état du jeu dans des globales (me, pacman, map, game), renvoie une
+// direction ou nil, et range l'humeur du fantôme dans la globale `state`. Le pont Lua renvoie les deux d'un coup : { direction, state }.
+let think = () => ({ direction: null, state: 'patrol' });
 let onAiError = null;
 let aiDisabled = false;
 
 const VALID_DIRECTIONS = new Set(['left', 'right', 'up', 'down']);
 const VALID_STATES = new Set(['patrol', 'follow', 'scared']);
 
-export function setGhostAI(chooseFn, updateFn, buildInfos = null) {
-  chooseDirection = chooseFn;
-  updateState = updateFn;
-  buildInfosFn = buildInfos;
+export function setGhostAI(thinkFn) {
+  think = thinkFn;
   aiDisabled = false;
 }
 
@@ -106,7 +105,6 @@ export class Ghost {
     this.pixelY = startY * TILE_SIZE;
     this.direction = null;
     this.state = 'patrol';
-    this.patrolDirectionTimer = 0;
     this.speed = SPEEDS.ghost * TILE_SIZE;
     // Retour après s'être fait manger : le fantôme rentre par ses propres
     // moyens, sans passer par le code de l'élève, et ne peut ni tuer ni être
@@ -124,7 +122,6 @@ export class Ghost {
 
     this.returnPath = findPath(map, this.gridX, this.gridY, targetX, targetY) || [];
     this.returning = true;
-    this.patrolDirectionTimer = 0;
     this.direction = this.returnPath.length > 0 ? this.returnPath.shift() : null;
   }
 
@@ -136,41 +133,29 @@ export class Ghost {
     return Math.abs(cx - centerX) < 1 && Math.abs(cy - centerY) < 1;
   }
 
-  getInfos(map, pacman) {
-    if (buildInfosFn) {
-      return safeCall(
-        () => buildInfosFn(this._context(), pacman._context(), map),
-        'buildInfos',
-        () => this._defaultInfos(map, pacman)
-      );
-    }
-
-    return this._defaultInfos(map, pacman);
-  }
-
   _context() {
     return {
       gridX: this.gridX,
       gridY: this.gridY,
       direction: this.direction,
-      state: this.state,
-      patrolDirectionTimer: this.patrolDirectionTimer,
     };
   }
 
-  _defaultInfos(map, pacman) {
-    return {
-      canGoUp: !map.isWall(this.gridX, this.gridY - 1),
-      canGoDown: !map.isWall(this.gridX, this.gridY + 1),
-      canGoLeft: !map.isWall(this.gridX - 1, this.gridY),
-      canGoRight: !map.isWall(this.gridX + 1, this.gridY),
-      distanceX: pacman.gridX - this.gridX,
-      distanceY: pacman.gridY - this.gridY,
-      totalDistance: Math.abs(pacman.gridX - this.gridX) + Math.abs(pacman.gridY - this.gridY),
-      currentDirection: this.direction,
-      patrolDirectionTimer: this.patrolDirectionTimer,
-      state: this.state,
-    };
+  // Un appel de `ghost` : la réponse devient la direction, et `state` l'humeur.
+  // Une réponse absente ou inconnue arrête le fantôme (c'est le « je ne fais
+  // rien » du sujet) ; une humeur absente ou inconnue vaut patrol.
+  _think(map, pacman, game) {
+    const answer = safeCall(
+      () => think(this._context(), pacman._context(), map, game),
+      'ghost',
+      () => ({ direction: null, state: this.state })
+    );
+
+    const direction = answer ? answer.direction : null;
+    this.direction = VALID_DIRECTIONS.has(direction) ? direction : null;
+
+    const state = answer ? answer.state : null;
+    this.state = VALID_STATES.has(state) ? state : 'patrol';
   }
 
   _syncGridFromPixel() {
@@ -186,47 +171,12 @@ export class Ghost {
       return;
     }
 
+    // Au centre d'une case, et seulement là : entre deux cases le fantôme
+    // finit son déplacement. Arrêté, il est au centre à chaque image, et le
+    // code est donc redemandé à chaque image jusqu'à ce qu'il réponde.
     if (this.isAtCenter()) {
       this._syncGridFromPixel();
-
-      const prevDirection = this.direction;
-      const directionTimerExpired = this.patrolDirectionTimer <= 0;
-
-      const infos = this.getInfos(map, pacman);
-      this.state = safeCall(
-        () => {
-          const nextState = updateState(infos, game);
-          return VALID_STATES.has(nextState) ? nextState : 'patrol';
-        },
-        'updateState',
-        () => 'patrol'
-      );
-      infos.state = this.state;
-
-      if (this.state !== 'patrol') {
-        this.patrolDirectionTimer = 0;
-      }
-
-      const newDirection = safeCall(
-        () => chooseDirection(infos, map),
-        'chooseDirection',
-        () => null
-      );
-
-      if (newDirection === undefined) {
-        // no return → keep current direction (pedagogical: forgotten return null)
-      } else if (newDirection === null || !VALID_DIRECTIONS.has(newDirection)) {
-        this.direction = null;
-      } else {
-        this.direction = newDirection;
-        if (this.state === 'patrol' && (prevDirection !== newDirection || directionTimerExpired)) {
-          this.patrolDirectionTimer = PATROL_DIRECTION_DURATION;
-        }
-      }
-    }
-
-    if (this.state === 'patrol' && this.patrolDirectionTimer > 0) {
-      this.patrolDirectionTimer = Math.max(0, this.patrolDirectionTimer - dt);
+      this._think(map, pacman, game);
     }
 
     // En poursuite seulement : c'est ce qui fait la différence entre un fantôme

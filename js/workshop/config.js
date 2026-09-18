@@ -1,12 +1,13 @@
 // NE PAS MODIFIER — configuration de l'atelier
 
 export const WORKSHOP_MODE = {
-  id: 'build',
-  label: 'Infos à coder',
+  id: 'single',
+  label: 'Une seule fonction',
   language: 'lua',
-  templateUrl: 'js/workshop/ghost_ai_build.lua?v=1',
-  storageKey: 'mini_pacman_ghost_ai_lua_v1',
-  requiresBuildInfos: true,
+  templateUrl: 'js/workshop/ghost.lua?v=1',
+  // Nouvelle clé : le code sauvegardé par l'ancienne version (trois fonctions)
+  // ne doit pas se charger dans celle-ci, il ne compilerait pas.
+  storageKey: 'mini_pacman_ghost_v2',
 };
 
 export function getWorkshopMode() {

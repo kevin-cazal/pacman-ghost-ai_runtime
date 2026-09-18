@@ -32,13 +32,11 @@ export function luaProxyToObject(proxy) {
   return obj;
 }
 
-function toLuaGhost(ghostCtx) {
+function toLuaMe(ghostCtx) {
   return {
     X: ghostCtx.gridX,
     Y: ghostCtx.gridY,
     direction: ghostCtx.direction,
-    state: ghostCtx.state,
-    patrolDirectionTimer: ghostCtx.patrolDirectionTimer,
   };
 }
 
@@ -78,13 +76,6 @@ function toLuaGame(game) {
   return toLuaApi({
     scaredTimer: game.scaredTimer,
   });
-}
-
-function toLuaInfos(infos) {
-  if (!infos || typeof infos !== 'object') {
-    return infos;
-  }
-  return { ...infos };
 }
 
 function createLuaState() {
@@ -254,6 +245,18 @@ function createLuaState() {
     return result;
   }
 
+  function setGlobal(name, value) {
+    pushValue(value);
+    lua_setglobal(L, to_luastring(name));
+  }
+
+  function getGlobal(name) {
+    lua_getglobal(L, to_luastring(name));
+    const value = interop.tojs(L, -1);
+    lua_pop(L, 1);
+    return value === undefined ? null : value;
+  }
+
   function loadStudentSource(source) {
     const status = luaL_loadstring(L, to_luastring(source));
     if (status !== LUA_OK) {
@@ -285,42 +288,44 @@ function createLuaState() {
     loadStudentSource,
     assertGlobalFunction,
     callGlobal,
+    setGlobal,
+    getGlobal,
     evalConsole(source) {
       return callGlobal('__ws_eval', [source]);
     },
   };
 }
 
-export function compileAndBindStudentCode(source, { requiresBuildInfos = true } = {}) {
+// Ce que le jeu met à disposition du code de l'élève, avant chaque appel de
+// `ghost`, c'est-à-dire à chaque case. Ce sont des globales Lua : la console les voit aussi, un élève peut
+// y taper `pacman.X` et lire la position du moment.
+function refreshGlobals(runtime, ghostCtx, pacmanCtx, map, game) {
+  runtime.setGlobal('me', toLuaMe(ghostCtx));
+  runtime.setGlobal('pacman', toLuaPacman(pacmanCtx));
+  runtime.setGlobal('map', toLuaMap(map));
+  runtime.setGlobal('game', toLuaGame(game));
+}
+
+export function compileAndBindStudentCode(source) {
   const runtime = createLuaState();
 
   runtime.loadStudentSource(source);
+  runtime.assertGlobalFunction('ghost');
 
-  if (requiresBuildInfos) {
-    runtime.assertGlobalFunction('buildInfos');
-  }
-  runtime.assertGlobalFunction('chooseDirection');
-  runtime.assertGlobalFunction('updateState');
-
-  const bindings = {
-    chooseDirection(infos, map) {
-      return runtime.callGlobal('chooseDirection', [toLuaInfos(infos), toLuaMap(map)], {
-        convertResult: false,
-      });
+  return {
+    // Un tour de réflexion : le jeu pousse son état, appelle `ghost`, et relit
+    // la globale `state` que l'élève a pu modifier.
+    think(ghostCtx, pacmanCtx, map, game) {
+      refreshGlobals(runtime, ghostCtx, pacmanCtx, map, game);
+      const direction = runtime.callGlobal('ghost', [], { convertResult: false });
+      return { direction, state: runtime.getGlobal('state') };
     },
-    updateState(infos, game) {
-      return runtime.callGlobal('updateState', [toLuaInfos(infos), toLuaGame(game)], {
-        convertResult: false,
-      });
+    // Pour que la console réponde avant le premier Démarrer.
+    refresh(ghostCtx, pacmanCtx, map, game) {
+      refreshGlobals(runtime, ghostCtx, pacmanCtx, map, game);
+    },
+    evalConsole(src) {
+      return runtime.evalConsole(src);
     },
   };
-
-  bindings.evalConsole = (src) => runtime.evalConsole(src);
-
-  if (requiresBuildInfos) {
-    bindings.buildInfos = (ghostCtx, pacmanCtx, map) =>
-      runtime.callGlobal('buildInfos', [toLuaGhost(ghostCtx), toLuaPacman(pacmanCtx), toLuaMap(map)]);
-  }
-
-  return bindings;
 }
